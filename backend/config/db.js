@@ -4,10 +4,10 @@ const { logger } = require("../helper/logger");
 
 const connections = {};
 
-const getDatabaseUri = (schoolId) => {
-  const template = process.env.MONGO_URI;
-  return template.replace("{schoolId}", schoolId);
-};
+// const getDatabaseUri = (schoolId) => {
+//   const template = process.env.MONGO_URI;
+//   return template.replace("{schoolId}", schoolId);
+// };
 // const connectDB = async () => {
 //   try {
 //     const conn = await mongoose.connect(process.env.MONGO_URI, {
@@ -24,15 +24,18 @@ const getDatabaseUri = (schoolId) => {
 // };
 
 const connectToDatabase = async (schoolId) => {
-  if (!connections[schoolId]) {
-    const uri = getDatabaseUri(schoolId);
-    connections[schoolId] = await mongoose.createConnection(uri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log(`Connected to DB for school ${schoolId}` .underline.bgGreen);
+  if (connections[schoolId]) {
+    return connections[schoolId];
   }
-  return connections[schoolId];
+
+  const uri = `mongodb://localhost:27017/school_${schoolId}`;
+  const connection = mongoose.createConnection(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  console.log(`Connected to DB for school ${schoolId}`.underline.bgGreen);
+  connections[schoolId] = connection;
+  return connection;
 };
 
 module.exports = connectToDatabase;

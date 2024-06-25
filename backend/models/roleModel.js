@@ -1,10 +1,12 @@
 const mongoose = require("mongoose");
 
 const roleModel = mongoose.Schema({
-  schoolID: { type: "String", unique: true, required: true },
-  role: { roleNmae: { type: "String" }, access: [{ type: "String" }] },
-  isActive: { type: "bool", required: true },
+  roleName: { type: String, required: true, unique: true },
+  access: [{ type: String }],
 });
 
-const Role = mongoose.model("Role", roleModel);
-module.exports = Role;
+const getRoleModel = (connection) => {
+  return connection.model("Role", roleModel);
+};
+
+module.exports = getRoleModel;

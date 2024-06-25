@@ -1,32 +1,27 @@
 const jwt = require("jsonwebtoken");
-const User = require("../models/userModel.js");
+const getUserModel = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 
 const protect = asyncHandler(async (req, res, next) => {
-  let token;
-
-  if (
-    req.headers.authorization &&
-    req.headers.authorization.startsWith("Bearer")
-  ) {
-    try {
-      token = req.headers.authorization.split(" ")[1];
-
-      //decodes token id
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-      req.user = await User.findById(decoded.id).select("-password");
-
-      next();
-    } catch (error) {
-      res.status(401);
-      throw new Error("Not authorized, token failed");
-    }
-  }
+  const token = req.headers.authorization?.split(" ")[1];
 
   if (!token) {
-    res.status(401);
-    throw new Error("Not authorized, no token");
+    return res.status(401).json({ error: "Not authorized, no token provided" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // const User = getUserModel(req.db);
+    // const user = await User.findById(decoded.id).select("-password");
+
+    // if (!user) {
+    //   return res.status(401).json({ error: "User not found" });
+    // }
+
+    // req.user = user;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: "Not authorized, token invalid" });
   }
 });
 
