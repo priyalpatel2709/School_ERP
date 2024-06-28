@@ -11,12 +11,12 @@ const {
 const identifyTenant = require("../middleware/IdentificationMiddleware");
 const { protect } = require("../middleware/authMiddleware");
 
-router.use(protect);
+// router.use(protect);
 
-router.post("/", identifyTenant, createRole);
-router.get("/roles", identifyTenant, getAllRoles);
-router.get("/roles/:id", identifyTenant, getById);
-router.delete("/roles/:id", identifyTenant, deleteById);
-router.delete("/roles", identifyTenant, deleteAllId);
-router.put("/roles/:id", identifyTenant, updateById);
+router.post("/", identifyTenant, protect, createRole);
+router.get("/roles", identifyTenant, protect, getAllRoles);
+router.get("/roles/:id", identifyTenant, protect, getById);
+router.delete("/roles/:id", identifyTenant, protect, deleteById);
+router.delete("/roles", identifyTenant, protect, deleteAllId);
+router.put("/roles/:id", identifyTenant, protect, updateById);
 module.exports = router;

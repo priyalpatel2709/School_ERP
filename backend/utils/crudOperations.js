@@ -1,23 +1,46 @@
-const mongoose = require("mongoose");
 const createError = require("http-errors");
 const { validationResult } = require("express-validator");
 
-const crudOperations = (model) => {
+const crudOperations = (models) => {
+  const { mainModel, populateModels = [] } = models;
+
+  const populateFields = async (document) => {
+    const populatedDocument = { ...document };
+
+    // Iterate through each populate model and populate the field in the document
+    for (const populateModel of populateModels) {
+      const field = populateModel.field;
+      const model = populateModel.model;
+
+      if (document[field]) {
+        const populatedField = await model.findById(document[field]).lean();
+        populatedDocument[field] = populatedField || null;
+      }
+    }
+
+    return populatedDocument;
+  };
+
   return {
     getAll: async (req, res, next) => {
       try {
-        const documents = await model.find({});
-        res.status(200).json(documents);
+        const documents = await mainModel.find({}).lean();
+        const populatedDocuments = await Promise.all(
+          documents.map(populateFields)
+        );
+        res.status(200).json(populatedDocuments);
       } catch (err) {
+        console.error("Error in getAll:", err); // Log the error for debugging
         next(createError(500, "Error fetching data", { error: err.message }));
       }
     },
 
     getById: async (req, res, next) => {
       try {
-        const document = await model.findById(req.params.id);
+        const document = await mainModel.findById(req.params.id).lean();
         if (document) {
-          res.status(200).json(document);
+          const populatedDocument = await populateFields(document);
+          res.status(200).json(populatedDocument);
         } else {
           next(createError(404, "Document not found"));
         }
@@ -35,7 +58,7 @@ const crudOperations = (model) => {
       }
 
       try {
-        const newDocument = new model(req.body);
+        const newDocument = new mainModel(req.body);
         const savedDocument = await newDocument.save();
         res.status(201).json(savedDocument);
       } catch (err) {
@@ -47,16 +70,16 @@ const crudOperations = (model) => {
 
     updateById: async (req, res, next) => {
       try {
-        const updatedDocument = await model.findByIdAndUpdate(
+        const updatedDocument = await mainModel.findByIdAndUpdate(
           req.params.id,
           req.body,
-          {
-            new: true,
-            runValidators: true,
-          }
+          { new: true, runValidators: true }
         );
         if (updatedDocument) {
-          res.status(200).json(updatedDocument);
+          const populatedDocument = await populateFields(
+            updatedDocument.toObject()
+          );
+          res.status(200).json(populatedDocument);
         } else {
           next(createError(404, "Document not found"));
         }
@@ -69,7 +92,9 @@ const crudOperations = (model) => {
 
     deleteById: async (req, res, next) => {
       try {
-        const deletedDocument = await model.findByIdAndDelete(req.params.id);
+        const deletedDocument = await mainModel.findByIdAndDelete(
+          req.params.id
+        );
         if (deletedDocument) {
           res.status(200).json({ message: "Document deleted successfully" });
         } else {
@@ -84,7 +109,7 @@ const crudOperations = (model) => {
 
     deleteAll: async (req, res, next) => {
       try {
-        await model.deleteMany({});
+        await mainModel.deleteMany({});
         res.status(200).json({ message: "All documents deleted successfully" });
       } catch (err) {
         next(
