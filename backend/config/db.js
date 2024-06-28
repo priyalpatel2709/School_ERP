@@ -30,8 +30,8 @@ const connectToDatabase = async (schoolId) => {
 
   const uri = `mongodb://localhost:27017/school_${schoolId}`;
   const connection = mongoose.createConnection(uri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
+    // useNewUrlParser: true,
+    // useUnifiedTopology: true,
   });
   console.log(`Connected to DB for school ${schoolId}`.underline.bgGreen);
   connections[schoolId] = connection;
