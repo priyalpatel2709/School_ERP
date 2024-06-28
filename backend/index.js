@@ -7,6 +7,7 @@ const dotenv = require("dotenv");
 const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 const userRouters = require("./routes/userRoute");
 const roleRouters = require("./routes/roleRoute");
+const schoolDetailRouters = require("./routes/schoolDetailRoute");
 
 //env file connect
 dotenv.config();
@@ -25,6 +26,7 @@ app.get("/", (req, resp) => {
 
 app.use("/user", userRouters);
 app.use("/role", roleRouters);
+app.use("/schoolInfo", schoolDetailRouters);
 
 app.use(notFound);
 app.use(errorHandler);
