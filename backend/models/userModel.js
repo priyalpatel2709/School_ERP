@@ -12,6 +12,22 @@ const userModel = new mongoose.Schema(
     schoolID: { type: String, required: false },
     isActive: { type: Boolean, required: true, default: true },
     age: { type: Number },
+    address: {
+      permanentAddress: {
+        street: { type: String,  },
+        city: { type: String,  },
+        state: { type: String,  },
+        zip: { type: String,  },
+        country: { type: String,  },
+      },
+      currentAddress: {
+        street: { type: String,  },
+        city: { type: String,  },
+        state: { type: String,  },
+        zip: { type: String,  },
+        country: { type: String,  },
+      },
+    },
   },
   { timestamps: true } // Corrected spelling
 );

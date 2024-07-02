@@ -1,4 +1,4 @@
-const asyncHandler = require("express-async-handler"); // Ensure asyncHandler is required
+const asyncHandler = require("express-async-handler");
 const getStudentModel = require("../models/studentModel");
 const getUserModel = require("../models/userModel");
 const getRoleModel = require("../models/roleModel");
@@ -31,7 +31,6 @@ const getAllStudent = asyncHandler(async (req, res, next) => {
           {
             field: "role",
             model: Role,
-            // If Role has further references, you can add them here
           },
         ],
       },
@@ -47,8 +46,16 @@ const getStudentById = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User, populateModels: [] },
-      // { field: "role", model: Role },
+      {
+        field: "user",
+        model: User,
+        populateFields: [
+          {
+            field: "role",
+            model: Role,
+          },
+        ],
+      },
     ],
   });
   roleOperations.getById(req, res, next);
@@ -61,8 +68,16 @@ const updateStudent = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User, populateModels: [] },
-      // { field: "role", model: Role },
+      {
+        field: "user",
+        model: User,
+        populateFields: [
+          {
+            field: "role",
+            model: Role,
+          },
+        ],
+      },
     ],
   });
   roleOperations.updateById(req, res, next);
@@ -75,8 +90,16 @@ const deleteAllStudent = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User, populateModels: [] },
-      // { field: "role", model: Role },
+      {
+        field: "user",
+        model: User,
+        populateFields: [
+          {
+            field: "role",
+            model: Role,
+          },
+        ],
+      },
     ],
   });
   roleOperations.deleteAll(req, res, next);
@@ -89,8 +112,16 @@ const deleteByStudentId = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User, populateModels: [] },
-      // { field: "role", model: Role },
+      {
+        field: "user",
+        model: User,
+        populateFields: [
+          {
+            field: "role",
+            model: Role,
+          },
+        ],
+      },
     ],
   });
   roleOperations.deleteById(req, res, next);

@@ -28,7 +28,8 @@ const authUser = asyncHandler(async (req, res) => {
 
 // Register a new user
 const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, loginID, schoolID, isActive } = req.body;
+  const { name, email, password, loginID, schoolID, isActive, address } =
+    req.body;
   const User = getUserModel(req.usersDb);
 
   // Check if schoolID is provided
@@ -50,6 +51,7 @@ const registerUser = asyncHandler(async (req, res) => {
     loginID,
     schoolID,
     isActive,
+    address
   });
 
   // Return user info and generated token
