@@ -11,28 +11,30 @@ const createStudent = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.schoolDb);
   const roleOperations = crudOperations({
     mainModel: Student,
-    populateModels: [{ field: "user", model: User }],
+    populateModels: [{ field: "user", model: User, populateModels: [] }],
   });
   roleOperations.create(req, res, next);
 });
 
 const getAllStudent = asyncHandler(async (req, res, next) => {
-  const Role = getRoleModel(req.schoolDb);
-  const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
+  const School = getStudentModel(req.schoolDb);
+  const Role = getRoleModel(req.schoolDb);
+
   const roleOperations = crudOperations({
-    mainModel: Student,
+    mainModel: School,
     populateModels: [
       {
-        field: "user", // Field in the document to populate (assuming 'user' is ObjectId reference)
-        model: User, // Mongoose model to use for 'user' population
-        populate: {
-          // Optional: Populate configuration for 'user.role'
-          path: "role", // Path to the nested field 'role' within 'user'
-          model: Role, // Model of the referenced document (Role model)
-        },
+        field: "user",
+        model: User,
+        populateFields: [
+          {
+            field: "role",
+            model: Role,
+            // If Role has further references, you can add them here
+          },
+        ],
       },
-      //   { field: "role", model: Role },
     ],
   });
   roleOperations.getAll(req, res, next);
@@ -45,8 +47,8 @@ const getStudentById = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User },
-      { field: "role", model: Role },
+      { field: "user", model: User, populateModels: [] },
+      // { field: "role", model: Role },
     ],
   });
   roleOperations.getById(req, res, next);
@@ -59,8 +61,8 @@ const updateStudent = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User },
-      { field: "role", model: Role },
+      { field: "user", model: User, populateModels: [] },
+      // { field: "role", model: Role },
     ],
   });
   roleOperations.updateById(req, res, next);
@@ -73,8 +75,8 @@ const deleteAllStudent = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User },
-      { field: "role", model: Role },
+      { field: "user", model: User, populateModels: [] },
+      // { field: "role", model: Role },
     ],
   });
   roleOperations.deleteAll(req, res, next);
@@ -87,8 +89,8 @@ const deleteByStudentId = asyncHandler(async (req, res, next) => {
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
-      { field: "user", model: User },
-      { field: "role", model: Role },
+      { field: "user", model: User, populateModels: [] },
+      // { field: "role", model: Role },
     ],
   });
   roleOperations.deleteById(req, res, next);

@@ -8,8 +8,7 @@ const studentModel = mongoose.Schema({
     zip: String,
     country: String,
   },
-  phone: String,
-  age: Number,
+  roleNumber: { type: Number, require: true },
   class: { type: mongoose.Schema.Types.ObjectId, ref: "Class" },
   calendar: { type: mongoose.Schema.Types.ObjectId, ref: "Calendar" },
   studentImage: {

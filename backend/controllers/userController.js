@@ -67,7 +67,13 @@ const getAllUsers = asyncHandler(async (req, res, next) => {
   const Role = getRoleModel(req.schoolDb);
   const roleOperations = crudOperations({
     mainModel: User,
-    populateModels: [{ field: "role", model: Role }],
+    populateModels: [
+      {
+        field: "role",
+        model: Role,
+        populateFields: [],
+      },
+    ],
   });
   roleOperations.getAll(req, res, next);
 });
@@ -77,7 +83,7 @@ const getById = asyncHandler(async (req, res, next) => {
   const Role = getRoleModel(req.schoolDb);
   const roleOperations = crudOperations({
     mainModel: User,
-    populateModels: [{ field: "role", model: Role }],
+    populateModels: [{ field: "role", model: Role, populateFields: [] }],
   });
   roleOperations.getById(req, res, next);
 });

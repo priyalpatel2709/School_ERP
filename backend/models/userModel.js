@@ -11,6 +11,7 @@ const userModel = new mongoose.Schema(
     deviceToken: { type: String, default: "" },
     schoolID: { type: String, required: false },
     isActive: { type: Boolean, required: true, default: true },
+    age: { type: Number },
   },
   { timestamps: true } // Corrected spelling
 );
