@@ -2,7 +2,12 @@ const asyncHandler = require("express-async-handler");
 
 const crudOperations = require("../utils/crudOperations");
 
-const { getClassModel, getUserModel } = require("../models");
+const {
+  getClassModel,
+  getUserModel,
+  getTeacherModel,
+  getStudentModel,
+} = require("../models");
 
 const createClass = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
@@ -18,6 +23,8 @@ const createClass = asyncHandler(async (req, res, next) => {
 
 const getAllClass = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
+  const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
 
   const classOperations = crudOperations({
@@ -25,13 +32,26 @@ const getAllClass = asyncHandler(async (req, res, next) => {
     populateModels: [
       {
         field: "classTeacher",
-        model: User,
-        populateFields: [],
+        model: Teacher,
+        select: "user",
+        populateFields: [
+          {
+            field: "user",
+            model: User,
+            select: "name",
+          },
+        ],
       },
       {
         field: "students",
-        model: User,
-        populateFields: [],
+        model: Student,
+        populateFields: [
+          {
+            field: "user",
+            model: User,
+            select: "name",
+          },
+        ],
       },
     ],
   });
@@ -43,89 +63,71 @@ const getAllClass = asyncHandler(async (req, res, next) => {
 const getById = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
-  const roleOperations = crudOperations({
+  const Student = getStudentModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
+  const classOperations = crudOperations({
     mainModel: Class,
     populateModels: [
       {
         field: "classTeacher",
-        model: User,
-        populateFields: [],
+        model: Teacher,
+        // select: "user",
+        populateFields: [
+          {
+            field: "user",
+            model: User,
+            select: "name",
+          },
+        ],
       },
       {
         field: "students",
-        model: User,
-        populateFields: [],
+        model: Student,
+        populateFields: [
+          {
+            field: "user",
+            model: User,
+            // select: "name",
+          },
+        ],
       },
     ],
   });
 
-  roleOperations.getById(req, res, next);
+  classOperations.getById(req, res, next);
 });
 
 const deleteById = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
-  const User = getUserModel(req.usersDb);
-  const roleOperations = crudOperations({
+
+  const classOperations = crudOperations({
     mainModel: Class,
-    populateModels: [
-      {
-        field: "classTeacher",
-        model: User,
-        populateFields: [],
-      },
-      {
-        field: "students",
-        model: User,
-        populateFields: [],
-      },
-    ],
+    populateModels: [],
   });
 
-  roleOperations.deleteById(req, res, next);
+  classOperations.deleteById(req, res, next);
 });
 
 const deleteAllId = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
-  const User = getUserModel(req.usersDb);
-  const roleOperations = crudOperations({
+
+  const classOperations = crudOperations({
     mainModel: Class,
-    populateModels: [
-      {
-        field: "classTeacher",
-        model: User,
-        populateFields: [],
-      },
-      {
-        field: "students",
-        model: User,
-        populateFields: [],
-      },
-    ],
+    populateModels: [],
   });
 
-  roleOperations.deleteAll(req, res, next);
+  classOperations.deleteAll(req, res, next);
 });
 
 const updateById = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
-  const User = getUserModel(req.usersDb);
-  const roleOperations = crudOperations({
+
+  const classOperations = crudOperations({
     mainModel: Class,
-    populateModels: [
-      {
-        field: "classTeacher",
-        model: User,
-        populateFields: [],
-      },
-      {
-        field: "students",
-        model: User,
-        populateFields: [],
-      },
-    ],
+    populateModels: [],
   });
 
-  roleOperations.updateById(req, res, next);
+  classOperations.updateById(req, res, next);
 });
 
 module.exports = {

@@ -5,6 +5,7 @@ const {
   getClassModel,
   getStudentModel,
   getUserModel,
+  getTeacherModel,
 } = require("../models");
 
 const crudOperations = require("../utils/crudOperations");
@@ -26,15 +27,22 @@ const getAllHomeWork = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
+  const Teacher = getTeacherModel(req.schoolDb);
   // Initialize CRUD operations for the Class model
   const HomeWorkOperations = crudOperations({
     mainModel: HomeWork,
     populateModels: [
       {
         field: "assignedBy",
-        model: User,
-        select: "name",
-        populateFields: [],
+        model: Teacher,
+        select: "user",
+        populateFields: [
+          {
+            field: "user",
+            model: User,
+            select: "name email",
+          },
+        ],
       },
       {
         field: "class",
@@ -66,12 +74,13 @@ const getHomeWorkById = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
+  const Teacher = getTeacherModel(req.schoolDb);
   const HomeWorkOperations = crudOperations({
     mainModel: HomeWork,
     populateModels: [
       {
         field: "assignedBy",
-        model: User,
+        model: Teacher,
         // select: "name",
         populateFields: [],
       },

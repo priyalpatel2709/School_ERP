@@ -4,6 +4,7 @@ const homeWorkRoutes = require("./homeWorkRoute");
 const roleRoutes = require("./roleRoute");
 const schoolDetailRoutes = require("./schoolDetailRoute");
 const studentRoutes = require("./studentRoute");
+const teacherRoutes = require("./teacherRoute");
 
 module.exports = {
   userRouters,
@@ -12,4 +13,5 @@ module.exports = {
   roleRoutes,
   schoolDetailRoutes,
   studentRoutes,
+  teacherRoutes,
 };

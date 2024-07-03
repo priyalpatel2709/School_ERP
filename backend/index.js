@@ -12,6 +12,7 @@ const {
   studentRoutes,
   classRoutes,
   homeWorkRoutes,
+  teacherRoutes,
 } = require("./routes");
 
 
@@ -36,6 +37,7 @@ app.use("/schoolInfo", schoolDetailRoutes);
 app.use("/student", studentRoutes);
 app.use("/class", classRoutes);
 app.use("/homeWork", homeWorkRoutes);
+app.use("/teacher", teacherRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
