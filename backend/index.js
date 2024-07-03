@@ -10,6 +10,7 @@ const roleRouters = require("./routes/roleRoute");
 const schoolDetailRouters = require("./routes/schoolDetailRoute");
 const studentRouters = require("./routes/studentRoute");
 const classRouters = require("./routes/classRoute");
+const homeWorkRouters = require("./routes/homeWorkRoute");
 
 //env file connect
 dotenv.config();
@@ -31,6 +32,7 @@ app.use("/role", roleRouters);
 app.use("/schoolInfo", schoolDetailRouters);
 app.use("/student", studentRouters);
 app.use("/class", classRouters);
+app.use("/homeWork", homeWorkRouters);
 
 app.use(notFound);
 app.use(errorHandler);

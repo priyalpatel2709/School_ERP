@@ -9,7 +9,7 @@ const createClass = asyncHandler(async (req, res, next) => {
   // Initialize CRUD operations for the Class model
   const classOperations = crudOperations({
     mainModel: Class,
-    populateModels: [], // Adjust this if you need to populate any fields upon creation
+    populateModels: [], 
   });
 
   // Call the create method from crudOperations

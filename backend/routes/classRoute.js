@@ -19,4 +19,5 @@ router.get("/:id", identifyTenant, protect, getById);
 router.delete("/:id", identifyTenant, protect, deleteById);
 router.delete("/", identifyTenant, protect, deleteAllId);
 router.put("/:id", identifyTenant, protect, updateById);
+
 module.exports = router;

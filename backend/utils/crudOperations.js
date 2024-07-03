@@ -1,20 +1,30 @@
 const createError = require("http-errors");
 const { validationResult } = require("express-validator");
 
-// Function to handle nested population of fields
 const populateNestedFields = async (query, populateFields) => {
-  for (const { field, model, populateFields: nestedFields } of populateFields) {
+  for (const {
+    field,
+    model,
+    select,
+    populateFields: nestedFields,
+  } of populateFields) {
     if (nestedFields) {
       query = query.populate({
         path: field,
         model: model,
+        select: select,
         populate: nestedFields.map((nestedField) => ({
           path: nestedField.field,
           model: nestedField.model,
+          select: nestedField.select,
         })),
       });
     } else {
-      query = query.populate(field, model);
+      query = query.populate({
+        path: field,
+        model: model,
+        select: select,
+      });
     }
   }
   return query;
@@ -30,7 +40,7 @@ const crudOperations = (models) => {
       try {
         let query = mainModel.find({});
         query = await populateNestedFields(query, populateModels);
-        const documents = await query; // Use  for performance
+        const documents = await query;
         res.status(200).json(documents);
       } catch (err) {
         console.error("Error in getAll:", err); // Log the error for debugging
@@ -50,7 +60,6 @@ const crudOperations = (models) => {
           next(createError(404, "Document not found"));
         }
       } catch (err) {
-        console.error("Error in getById:", err); // Log the error for debugging
         next(createError(500, "Error fetching data", { error: err.message }));
       }
     },
@@ -69,7 +78,6 @@ const crudOperations = (models) => {
         const savedDocument = await newDocument.save();
         res.status(201).json(savedDocument);
       } catch (err) {
-        console.error("Error in create:", err); // Log the error for debugging
         next(
           createError(500, "Error creating document", { error: err.message })
         );
@@ -79,13 +87,23 @@ const crudOperations = (models) => {
     // Update document by ID
     updateById: async (req, res, next) => {
       try {
-        const updatedDocument = await mainModel
-          .findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-            runValidators: true,
-          })
-          ;
+        const { user: userData, ...updateData } = req.body;
+        const updatedDocument = await mainModel.findByIdAndUpdate(
+          req.params.id,
+          updateData,
+          { new: true, runValidators: true }
+        );
+
         if (updatedDocument) {
+          if (userData) {
+            const User = mongoose.model("User");
+            const userDoc = await User.findById(updatedDocument.user);
+            if (userDoc) {
+              Object.assign(userDoc, userData);
+              await userDoc.save();
+            }
+          }
+
           let query = mainModel.findById(updatedDocument._id);
           query = await populateNestedFields(query, populateModels);
           const populatedDocument = await query;
