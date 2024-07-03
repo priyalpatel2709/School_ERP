@@ -11,13 +11,13 @@ const {
 
 const createClass = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
-  // Initialize CRUD operations for the Class model
+
   const classOperations = crudOperations({
     mainModel: Class,
     populateModels: [],
   });
 
-  // Call the create method from crudOperations
+ 
   classOperations.create(req, res, next);
 });
 
@@ -56,7 +56,7 @@ const getAllClass = asyncHandler(async (req, res, next) => {
     ],
   });
 
-  // Call the create method from crudOperations
+ 
   classOperations.getAll(req, res, next);
 });
 
