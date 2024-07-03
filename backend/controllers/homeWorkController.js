@@ -124,6 +124,48 @@ const updateById = asyncHandler(async (req, res, next) => {
   HomeWorkOperations.updateById(req, res, next);
 });
 
+const submitHomework = asyncHandler(async (req, res, next) => {
+  const Homework = getHomeworkModel(req.schoolDb);
+  const { homeworkId, studentId, fileUrl } = req.body;
+
+  const homework = await Homework.findById(homeworkId);
+  if (!homework) {
+    return res.status(404).json({ message: "Homework not found" });
+  }
+
+  homework.submissions.push({
+    student: studentId,
+    submittedAt: new Date(),
+    fileUrl,
+  });
+
+  const updatedHomework = await homework.save();
+  res.status(200).json(updatedHomework);
+});
+const gradeHomework = asyncHandler(async (req, res, next) => {
+  const Homework = getHomeworkModel(req.schoolDb);
+  const { homeworkId, studentId, grade, feedback } = req.body;
+
+  const homework = await Homework.findById(homeworkId);
+  if (!homework) {
+    return res.status(404).json({ message: "Homework not found" });
+  }
+
+  const submission = homework.submissions.find(
+    (sub) => sub.student.toString() === studentId
+  );
+
+  if (!submission) {
+    return res.status(404).json({ message: "Submission not found" });
+  }
+
+  submission.grade = grade;
+  submission.feedback = feedback;
+
+  const updatedHomework = await homework.save();
+  res.status(200).json(updatedHomework);
+});
+
 module.exports = {
   createHomeWork,
   getAllHomeWork,
@@ -131,4 +173,6 @@ module.exports = {
   deleteById,
   deleteAll,
   updateById,
+  submitHomework,
+  gradeHomework
 };
