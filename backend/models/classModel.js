@@ -6,7 +6,7 @@ const classModel = new mongoose.Schema(
     division: { type: String, required: true },
     classTeacher: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Teachers",
+      ref: "Teacher",
       required: true,
     },
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],

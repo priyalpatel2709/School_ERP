@@ -16,7 +16,7 @@ const teacherModel = mongoose.Schema({
 });
 
 const getStudentModel = (connection) => {
-  return connection.model("Teachers", teacherModel);
+  return connection.model("Teacher", teacherModel);
 };
 
 module.exports = getStudentModel;

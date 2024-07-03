@@ -12,9 +12,9 @@ const homeworkSchema = new mongoose.Schema(
     },
     assignedBy: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Teachers",
+      ref: "Teacher",
       required: true,
-    }, //todo change with teacher model
+    },
     submissions: [
       {
         student: { type: mongoose.Schema.Types.ObjectId, ref: "Student" },
