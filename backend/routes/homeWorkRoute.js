@@ -8,6 +8,7 @@ const {
   updateById,
   submitHomework,
   gradeHomework,
+  getHomeworkByStudent,
 } = require("../controllers/homeWorkController");
 const identifyTenant = require("../middleware/IdentificationMiddleware");
 const { protect } = require("../middleware/authMiddleware");
@@ -24,5 +25,11 @@ router.put("/:id", identifyTenant, protect, updateById);
 //submit by student
 router.post("/submit", identifyTenant, protect, submitHomework);
 router.post("/grade", identifyTenant, protect, gradeHomework);
+router.get(
+  "/by-student/:studentId",
+  identifyTenant,
+  protect,
+  getHomeworkByStudent
+);
 
 module.exports = router;

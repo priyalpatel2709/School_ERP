@@ -1,8 +1,12 @@
 const asyncHandler = require("express-async-handler");
-const getHomeworkModel = require("../models/homeWorkModel");
-const getClassModel = require("../models/classModel");
-const getStudentModel = require("../models/studentModel");
-const getUserModel = require("../models/userModel");
+
+const {
+  getHomeworkModel,
+  getClassModel,
+  getStudentModel,
+  getUserModel,
+} = require("../models");
+
 const crudOperations = require("../utils/crudOperations");
 
 const createHomeWork = asyncHandler(async (req, res, next) => {
@@ -166,6 +170,30 @@ const gradeHomework = asyncHandler(async (req, res, next) => {
   res.status(200).json(updatedHomework);
 });
 
+const getHomeworkByStudent = asyncHandler(async (req, res, next) => {
+  const Homework = getHomeworkModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+  const { studentId } = req.params;
+
+  try {
+    const homeworks = await Homework.find(
+      { "submissions.student": studentId },
+      { title: 1, description: 1, _id: 1, assignedBy: 1, dueDate: 1 }
+    )
+      .populate({
+        path: "assignedBy",
+        model: User,
+        select: "name",
+      })
+      .lean();
+
+    res.status(200).json(homeworks);
+  } catch (err) {
+    console.error("Error in getHomeworkByStudent:", err);
+    next(createError(500, "Error fetching homework", { error: err.message }));
+  }
+});
+
 module.exports = {
   createHomeWork,
   getAllHomeWork,
@@ -174,5 +202,6 @@ module.exports = {
   deleteAll,
   updateById,
   submitHomework,
-  gradeHomework
+  gradeHomework,
+  getHomeworkByStudent,
 };

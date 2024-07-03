@@ -1,15 +1,15 @@
 const asyncHandler = require("express-async-handler");
-const getClassModel = require("../models/classModel");
-const getUserModel = require("../models/userModel");
+
 const crudOperations = require("../utils/crudOperations");
-const getRoleModel = require("../models/roleModel");
+
+const { getClassModel, getUserModel } = require("../models");
 
 const createClass = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
   // Initialize CRUD operations for the Class model
   const classOperations = crudOperations({
     mainModel: Class,
-    populateModels: [], 
+    populateModels: [],
   });
 
   // Call the create method from crudOperations

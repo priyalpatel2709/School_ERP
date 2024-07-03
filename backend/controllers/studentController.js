@@ -1,7 +1,5 @@
 const asyncHandler = require("express-async-handler");
-const getStudentModel = require("../models/studentModel");
-const getUserModel = require("../models/userModel");
-const getRoleModel = require("../models/roleModel");
+const { getStudentModel, getUserModel, getRoleModel } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 
 //create new Student

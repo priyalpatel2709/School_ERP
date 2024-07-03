@@ -1,5 +1,5 @@
 const asyncHandler = require("express-async-handler"); // Ensure asyncHandler is required
-const getSchoolDetailModel = require("../models/schoolDetailModel");
+const { getSchoolDetailModel } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 
 const addSchoolDetail = asyncHandler(async (req, res, next) => {

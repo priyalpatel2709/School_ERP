@@ -1,8 +1,7 @@
 const asyncHandler = require("express-async-handler");
-const getUserModel = require("../models/userModel");
-const getRoleModel = require("../models/roleModel");
 const generateToken = require("../config/generateToken");
 const crudOperations = require("../utils/crudOperations");
+const { getUserModel, getRoleModel } = require("../models");
 
 // Authenticate user and generate token
 const authUser = asyncHandler(async (req, res) => {
@@ -51,7 +50,7 @@ const registerUser = asyncHandler(async (req, res) => {
     loginID,
     schoolID,
     isActive,
-    address
+    address,
   });
 
   // Return user info and generated token

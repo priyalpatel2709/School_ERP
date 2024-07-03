@@ -1,6 +1,6 @@
 const asyncHandler = require("express-async-handler"); // Ensure asyncHandler is required
-const getRoleModel = require("../models/roleModel");
 const crudOperations = require("../utils/crudOperations");
+const { getRoleModel } = require("../models");
 
 //create new role
 const createRole = asyncHandler(async (req, res, next) => {
