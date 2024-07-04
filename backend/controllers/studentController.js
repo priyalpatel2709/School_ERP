@@ -1,6 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const { getStudentModel, getUserModel, getRoleModel } = require("../models");
 const crudOperations = require("../utils/crudOperations");
+const mongoose = require("mongoose");
 
 //create new Student
 const createStudent = asyncHandler(async (req, res, next) => {
@@ -125,6 +126,53 @@ const deleteByStudentId = asyncHandler(async (req, res, next) => {
   roleOperations.deleteById(req, res, next);
 });
 
+// Create a student along with a new user
+const createStudentWithUser = asyncHandler(async (req, res, next) => {
+  const Student = getStudentModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+  const Role = getRoleModel(req.schoolDb);
+
+  const { roleNumber, classId, calendarId, studentImage, user } = req.body;
+
+  try {
+    // Retrieve the student role
+    let studentRole = await Role.findOne({ roleName: "student" });
+
+    // If the student role does not exist, create it
+    if (!studentRole) {
+      studentRole = new Role({ roleName: "student", access: ["student"] });
+      studentRole = await studentRole.save();
+    }
+
+    // Create the new user with the student role
+    const newUser = new User({
+      ...user,
+      role: studentRole._id,
+    });
+    const savedUser = await newUser.save();
+
+    // Create the new student and associate it with the created user
+    const newStudent = new Student({
+      roleNumber,
+      class: classId,
+      calendar: calendarId,
+      studentImage,
+      user: savedUser._id,
+    });
+
+    const savedStudent = await newStudent.save();
+
+    res.status(201).json(savedStudent);
+  } catch (err) {
+    console.error("Error in createStudentWithUser:", err); // Log the error for debugging
+    next(
+      createError(500, "Error creating student with user", {
+        error: err.message,
+      })
+    );
+  }
+});
+
 module.exports = {
   createStudent,
   getAllStudent,
@@ -132,4 +180,5 @@ module.exports = {
   deleteAllStudent,
   deleteByStudentId,
   getStudentById,
+  createStudentWithUser,
 };
