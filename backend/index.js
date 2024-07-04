@@ -13,6 +13,7 @@ const {
   classRoutes,
   homeWorkRoutes,
   teacherRoutes,
+  subjectRoutes
 } = require("./routes");
 
 
@@ -38,6 +39,7 @@ app.use("/student", studentRoutes);
 app.use("/class", classRoutes);
 app.use("/homeWork", homeWorkRoutes);
 app.use("/teacher", teacherRoutes);
+app.use("/subject", subjectRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

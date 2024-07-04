@@ -4,7 +4,7 @@ const teacherModel = mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
   calendar: { type: mongoose.Schema.Types.ObjectId, ref: "Calendar" }, // todo create calendar
-  subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }], // todo create subject
+  subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
   leaves: {
     annual: { type: Number, default: 0, min: 0 },
     sick: { type: Number, default: 0, min: 0 },

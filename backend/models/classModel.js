@@ -10,7 +10,7 @@ const classModel = new mongoose.Schema(
       required: true,
     },
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
-    // subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }], //todo cerate subjects
+    subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
   },
   { timestamps: true } // Automatically manage createdAt and updatedAt fields
 );

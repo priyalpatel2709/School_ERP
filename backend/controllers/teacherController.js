@@ -4,6 +4,7 @@ const {
   getUserModel,
   getClassModel,
   getRoleModel,
+  getSubjectModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 
@@ -22,6 +23,7 @@ const getAllTeacher = asyncHandler(async (req, res, next) => {
   const Teacher = getTeacherModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
   const Class = getClassModel(req.schoolDb);
+  const Subject = getSubjectModel(req.schoolDb);
 
   const teacherOperations = crudOperations({
     mainModel: Teacher,
@@ -30,12 +32,14 @@ const getAllTeacher = asyncHandler(async (req, res, next) => {
         field: "user",
         model: User,
         select: "name",
-        populateFields: [],
       },
       {
         field: "classes",
         model: Class,
-        populateFields: [],
+      },
+      {
+        field: "subjects",
+        model: Subject,
       },
     ],
   });
@@ -150,6 +154,37 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+const searchTeacher = asyncHandler(async (req, res, next) => {
+  const Teacher = getTeacherModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+
+  try {
+    // Find the user by name
+    const user = await User.findOne({ name: req.query.name });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Find the teacher by user ID
+    const teacher = await Teacher.findOne({ user: user._id });
+    // .populate("user");
+    // .populate("classes")
+    // .populate("calendar")
+    // .populate("subjects")
+    // .lean();
+
+    if (!teacher) {
+      return res.status(404).json({ message: "Teacher not found" });
+    }
+
+    res.status(200).json(teacher);
+  } catch (error) {
+    console.log("File: teacherController.js", "Line 183:", error);
+    next(createError(500, "Error fetching homework", { error: error.message }));
+  }
+});
+
 module.exports = {
   createTeacher,
   getAllTeacher,
@@ -158,4 +193,5 @@ module.exports = {
   deleteTeacherById,
   deleteAllTeacher,
   createTeacherWithUser,
+  searchTeacher,
 };

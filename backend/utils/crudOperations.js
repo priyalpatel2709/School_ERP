@@ -1,33 +1,22 @@
 const createError = require("http-errors");
 const { validationResult } = require("express-validator");
 
-const populateNestedFields = async (query, populateFields) => {
-  for (const {
-    field,
-    model,
-    select,
-    populateFields: nestedFields,
-  } of populateFields) {
-    if (nestedFields) {
-      query = query.populate({
-        path: field,
-        model: model,
-        select: select,
-        populate: nestedFields.map((nestedField) => ({
-          path: nestedField.field,
-          model: nestedField.model,
-          select: nestedField.select,
-        })),
-      });
-    } else {
-      query = query.populate({
-        path: field,
-        model: model,
-        select: select,
-      });
-    }
-  }
-  return query;
+const populateNestedFields = (query, populateFields) => {
+  const buildPopulateObject = (fields) => {
+    return fields.map(
+      ({ field, model, select, populateFields: nestedFields, options }) => {
+        const populateObject = { path: field, model, select, ...options };
+
+        if (nestedFields) {
+          populateObject.populate = buildPopulateObject(nestedFields);
+        }
+
+        return populateObject;
+      }
+    );
+  };
+
+  return query.populate(buildPopulateObject(populateFields));
 };
 
 // CRUD operations generator function

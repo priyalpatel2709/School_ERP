@@ -5,6 +5,7 @@ const roleRoutes = require("./roleRoute");
 const schoolDetailRoutes = require("./schoolDetailRoute");
 const studentRoutes = require("./studentRoute");
 const teacherRoutes = require("./teacherRoute");
+const subjectRoutes = require("./subjectRoute");
 
 module.exports = {
   userRouters,
@@ -14,4 +15,5 @@ module.exports = {
   schoolDetailRoutes,
   studentRoutes,
   teacherRoutes,
+  subjectRoutes,
 };
