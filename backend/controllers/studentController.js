@@ -2,7 +2,7 @@ const asyncHandler = require("express-async-handler");
 const {
   getStudentModel,
   getUserModel,
-  getRoleModel,
+
   getClassModel,
   getTeacherModel,
 } = require("../models");
@@ -11,35 +11,26 @@ const mongoose = require("mongoose");
 
 //create new Student
 const createStudent = asyncHandler(async (req, res, next) => {
-  //   const Role = getRoleModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.schoolDb);
-  const roleOperations = crudOperations({
+  const studentOperations = crudOperations({
     mainModel: Student,
     populateModels: [{ field: "user", model: User, populateModels: [] }],
   });
-  roleOperations.create(req, res, next);
+  studentOperations.create(req, res, next);
 });
 
 const getAllStudent = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
-  const School = getStudentModel(req.schoolDb);
-  const Role = getRoleModel(req.schoolDb);
+  const Student = getStudentModel(req.schoolDb);
   const Class = getClassModel(req.schoolDb);
-  const Teacher = getTeacherModel(req.schoolDb);
 
-  const roleOperations = crudOperations({
-    mainModel: School,
+  const studentOperations = crudOperations({
+    mainModel: Student,
     populateModels: [
       {
         field: "user",
         model: User,
-        populateFields: [
-          {
-            field: "role",
-            model: Role,
-          },
-        ],
       },
       {
         field: "class",
@@ -48,28 +39,21 @@ const getAllStudent = asyncHandler(async (req, res, next) => {
       },
     ],
   });
-  roleOperations.getAll(req, res, next);
+  studentOperations.getAll(req, res, next);
 });
 
 const getStudentById = asyncHandler(async (req, res, next) => {
-  const Role = getRoleModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
   const Class = getClassModel(req.schoolDb);
   const Teacher = getTeacherModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
 
-  const roleOperations = crudOperations({
+  const studentOperations = crudOperations({
     mainModel: Student,
     populateModels: [
       {
         field: "user",
         model: User,
-        populateFields: [
-          {
-            field: "role",
-            model: Role,
-          },
-        ],
       },
       {
         field: "class",
@@ -85,98 +69,48 @@ const getStudentById = asyncHandler(async (req, res, next) => {
       },
     ],
   });
-  roleOperations.getById(req, res, next);
+  studentOperations.getById(req, res, next);
 });
 
 const updateStudent = asyncHandler(async (req, res, next) => {
-  const Role = getRoleModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
-  const roleOperations = crudOperations({
+  const studentOperations = crudOperations({
     mainModel: Student,
-    populateModels: [
-      {
-        field: "user",
-        model: User,
-        populateFields: [
-          {
-            field: "role",
-            model: Role,
-          },
-        ],
-      },
-    ],
   });
-  roleOperations.updateById(req, res, next);
+  studentOperations.updateById(req, res, next);
 });
 
 const deleteAllStudent = asyncHandler(async (req, res, next) => {
-  const Role = getRoleModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
-  const roleOperations = crudOperations({
+  const studentOperations = crudOperations({
     mainModel: Student,
-    populateModels: [
-      {
-        field: "user",
-        model: User,
-        populateFields: [
-          {
-            field: "role",
-            model: Role,
-          },
-        ],
-      },
-    ],
   });
-  roleOperations.deleteAll(req, res, next);
+  studentOperations.deleteAll(req, res, next);
 });
 
 const deleteByStudentId = asyncHandler(async (req, res, next) => {
-  const Role = getRoleModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
-  const roleOperations = crudOperations({
+  const studentOperations = crudOperations({
     mainModel: Student,
-    populateModels: [
-      {
-        field: "user",
-        model: User,
-        populateFields: [
-          {
-            field: "role",
-            model: Role,
-          },
-        ],
-      },
-    ],
   });
-  roleOperations.deleteById(req, res, next);
+  studentOperations.deleteById(req, res, next);
 });
 
 // Create a student along with a new user
 const createStudentWithUser = asyncHandler(async (req, res, next) => {
   const Student = getStudentModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
-  const Role = getRoleModel(req.schoolDb);
 
   try {
-    // Retrieve the student role
-    let studentRole = await Role.findOne({ roleName: "student" });
-
-    // If the student role does not exist, create it
-    if (!studentRole) {
-      studentRole = new Role({ roleName: "student", access: ["student"] });
-      studentRole = await studentRole.save();
-    }
-
     // Extract user data from the request body
     const { user, ...studentData } = req.body;
 
     // Create the new user with the student role
     const newUser = new User({
       ...user,
-      role: studentRole._id,
     });
     const savedUser = await newUser.save();
 

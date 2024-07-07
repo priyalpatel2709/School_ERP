@@ -8,7 +8,9 @@ const {
   getTeacherModel,
   getStudentModel,
   getSubjectModel,
+  getTimeTableModel,
 } = require("../models");
+const { timeTablePopulateModel } = require("../utils/miscellaneousFunctions");
 
 const createClass = asyncHandler(async (req, res, next) => {
   const Class = getClassModel(req.schoolDb);
@@ -27,6 +29,8 @@ const getAllClass = asyncHandler(async (req, res, next) => {
   const Student = getStudentModel(req.schoolDb);
   const Subject = getSubjectModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
+  const TimeTable = getTimeTableModel(req.schoolDb);
+  const populateModels = timeTablePopulateModel(User, Teacher, Subject);
 
   const classOperations = crudOperations({
     mainModel: Class,
@@ -46,6 +50,7 @@ const getAllClass = asyncHandler(async (req, res, next) => {
       {
         field: "students",
         model: Student,
+        select: "user roleNumber guardianInfo metaData",
         populateFields: [
           {
             field: "user",
@@ -73,6 +78,12 @@ const getAllClass = asyncHandler(async (req, res, next) => {
           },
         ],
       },
+      {
+        field: "timeTable",
+        model: TimeTable,
+        // select: "name code teachers",
+        populateFields: populateModels,
+      },
     ],
   });
 
@@ -84,13 +95,16 @@ const getById = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
   const Student = getStudentModel(req.schoolDb);
   const Teacher = getTeacherModel(req.schoolDb);
+  const Subject = getSubjectModel(req.schoolDb);
+  const TimeTable = getTimeTableModel(req.schoolDb);
+  const populateModels = timeTablePopulateModel(User, Teacher, Subject);
   const classOperations = crudOperations({
     mainModel: Class,
     populateModels: [
       {
         field: "classTeacher",
         model: Teacher,
-        // select: "user",
+        select: "user",
         populateFields: [
           {
             field: "user",
@@ -109,6 +123,12 @@ const getById = asyncHandler(async (req, res, next) => {
             // select: "name",
           },
         ],
+      },
+      {
+        field: "timeTable",
+        model: TimeTable,
+        // select: "name code teachers",
+        populateFields: populateModels,
       },
     ],
   });

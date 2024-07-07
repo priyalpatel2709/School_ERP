@@ -13,9 +13,9 @@ const {
   classRoutes,
   homeWorkRoutes,
   teacherRoutes,
-  subjectRoutes
+  subjectRoutes,
+  timeTableRoutes,
 } = require("./routes");
-
 
 //env file connect
 dotenv.config();
@@ -32,14 +32,15 @@ app.get("/", (req, resp) => {
   resp.send(htmlContent);
 });
 
-app.use("/user", userRouters);
-app.use("/role", roleRoutes);
-app.use("/schoolInfo", schoolDetailRoutes);
-app.use("/student", studentRoutes);
-app.use("/class", classRoutes);
-app.use("/homeWork", homeWorkRoutes);
-app.use("/teacher", teacherRoutes);
-app.use("/subject", subjectRoutes);
+app.use("/api/v1/user", userRouters);
+app.use("/api/v1/role", roleRoutes);
+app.use("/api/v1/schoolInfo", schoolDetailRoutes);
+app.use("/api/v1/student", studentRoutes);
+app.use("/api/v1/class", classRoutes);
+app.use("/api/v1/homeWork", homeWorkRoutes);
+app.use("/api/v1/teacher", teacherRoutes);
+app.use("/api/v1/subject", subjectRoutes);
+app.use("/api/v1/timeTable", timeTableRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

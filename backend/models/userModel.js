@@ -42,6 +42,8 @@ const userModel = new mongoose.Schema(
       height: { type: Number },
       weight: { type: Number },
     },
+    roleName: { type: String, required: true },
+    access: [{ type: String }],
     metaData: [
       {
         key: { type: String },

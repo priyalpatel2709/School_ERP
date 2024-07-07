@@ -4,29 +4,29 @@ const crudOperations = require("../utils/crudOperations");
 
 const addSchoolDetail = asyncHandler(async (req, res, next) => {
   const School = getSchoolDetailModel(req.schoolDb);
-  const roleOperations = crudOperations({
+  const schoolDetailOperations = crudOperations({
     mainModel: School,
     populateModels: [],
   });
-  roleOperations.create(req, res, next);
+  schoolDetailOperations.create(req, res, next);
 });
 
 const getSchoolDetail = asyncHandler(async (req, res, next) => {
   const School = getSchoolDetailModel(req.schoolDb);
-  const roleOperations = crudOperations({
+  const schoolDetailOperations = crudOperations({
     mainModel: School,
     populateModels: [],
   });
-  roleOperations.getAll(req, res, next);
+  schoolDetailOperations.getAll(req, res, next);
 });
 
 const updateSchoolDetail = asyncHandler(async (req, res, next) => {
   const School = getSchoolDetailModel(req.schoolDb);
-  const roleOperations = crudOperations({
+  const schoolDetailOperations = crudOperations({
     mainModel: School,
     populateModels: [],
   });
-  roleOperations.updateById(req, res, next);
+  schoolDetailOperations.updateById(req, res, next);
 });
 
 module.exports = {

@@ -6,6 +6,7 @@ const getStudentModel = require("./studentModel");
 const getUserModel = require("./userModel");
 const getTeacherModel = require("./teacherModel");
 const getSubjectModel = require("./subjectModel");
+const getTimeTableModel = require("./timeTableModel");
 
 module.exports = {
   getHomeworkModel,
@@ -16,4 +17,5 @@ module.exports = {
   getUserModel,
   getTeacherModel,
   getSubjectModel,
+  getTimeTableModel,
 };

@@ -5,6 +5,7 @@ const {
   getClassModel,
   getRoleModel,
   getSubjectModel,
+  getTimeTableModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 
@@ -108,28 +109,14 @@ const deleteTeacherById = asyncHandler(async (req, res, next) => {
 const createTeacherWithUser = asyncHandler(async (req, res, next) => {
   const Teacher = getTeacherModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
-  const Role = getRoleModel(req.schoolDb);
 
   try {
-    // Retrieve the teacher role
-    let teacherRole = await Role.findOne({ roleName: "teacher" });
-
-    // If the teacher role does not exist, create it
-    if (!teacherRole) {
-      teacherRole = new Role({
-        roleName: "teacher",
-        access: ["teacher", "student"],
-      });
-      teacherRole = await teacherRole.save();
-    }
-
     // Extract user data and other teacher-related data from the request body
     const { user, ...teacherData } = req.body;
 
     // Create the new user with the teacher role
     const newUser = new User({
       ...user,
-      role: teacherRole._id,
     });
     const savedUser = await newUser.save();
 
@@ -183,6 +170,65 @@ const searchTeacher = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getTimeTableByTeacherId = asyncHandler(async (req, res, next) => {
+  const TimeTable = getTimeTableModel(req.schoolDb);
+
+  const Subject = getSubjectModel(req.schoolDb);
+
+  const teacherId = req.params.teacherId;
+
+  try {
+    const timeTables = await TimeTable.find({
+      $or: [
+        { "week.Monday.teacher": teacherId },
+        { "week.Tuesday.teacher": teacherId },
+        { "week.Wednesday.teacher": teacherId },
+        { "week.Thursday.teacher": teacherId },
+        { "week.Friday.teacher": teacherId },
+        { "week.Saturday.teacher": teacherId },
+        { "week.Sunday.teacher": teacherId },
+      ],
+    }).populate({
+      path: "week",
+      populate: [
+        {
+          path: "Monday.subject Tuesday.subject Wednesday.subject Thursday.subject Friday.subject Saturday.subject Sunday.subject",
+          model: Subject,
+          select: "name code",
+        },
+      ],
+    });
+
+    // Collect all lectures for the given teacher ID
+    const teacherLectures = [];
+
+    timeTables.forEach((timeTable) => {
+      for (const [day, lectures] of Object.entries(timeTable.week)) {
+        lectures.forEach((lecture) => {
+          if (lecture.teacher && lecture.teacher._id.toString() === teacherId) {
+            teacherLectures.push({
+              day,
+              subject: lecture.subject,
+              teacher: lecture.teacher,
+              startTime: lecture.startTime,
+              endTime: lecture.endTime,
+              isBreak: lecture.isBreak,
+              classRoom: lecture.classRoom,
+              lectureNumber: lecture.lectureNumber,
+              metaData: lecture.metaData,
+            });
+          }
+        });
+      }
+    });
+
+    res.status(200).json({ teacherLectures });
+  } catch (error) {
+    console.error("Error fetching time table by teacher ID:", error);
+    next(error);
+  }
+});
+
 module.exports = {
   createTeacher,
   getAllTeacher,
@@ -192,4 +238,5 @@ module.exports = {
   deleteAllTeacher,
   createTeacherWithUser,
   searchTeacher,
+  getTimeTableByTeacherId,
 };

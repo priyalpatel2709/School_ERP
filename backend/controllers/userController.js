@@ -1,7 +1,7 @@
 const asyncHandler = require("express-async-handler");
 const generateToken = require("../config/generateToken");
 const crudOperations = require("../utils/crudOperations");
-const { getUserModel, getRoleModel } = require("../models");
+const { getUserModel } = require("../models");
 
 // Authenticate user and generate token
 const authUser = asyncHandler(async (req, res) => {
@@ -25,66 +25,62 @@ const authUser = asyncHandler(async (req, res) => {
   });
 });
 
-// Register a new user
-const registerUser = asyncHandler(async (req, res) => {
-  const { name, email, password, loginID, schoolID, isActive, address } =
-    req.body;
-  const User = getUserModel(req.usersDb);
+const registerUser = asyncHandler(async (req, res, next) => {
+  try {
+    const { email, schoolID, ...user } = req.body;
+    const User = getUserModel(req.usersDb);
 
-  // Check if schoolID is provided
-  if (!schoolID) {
-    throw createError(400, "School ID must be provided");
+    // Check if schoolID is provided
+    if (!schoolID) {
+      throw createError(400, "School ID must be provided");
+    }
+
+    // Check if user with the same email already exists
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      throw createError(400, "User already exists");
+    }
+
+    // Create new user
+    const newUser = await User.create({
+      email,
+      schoolID,
+      ...user,
+    });
+
+    // Return user info and generated token
+    res.status(201).json({
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      token: generateToken(newUser._id),
+    });
+  } catch (error) {
+    console.log('File: userController.js', 'Line 59:', error.message);
+    // Handle validation errors
+    if (error.name === "ValidationError") {
+      return next(createError(400, error.message));
+    }
+    // Handle other errors
+    next(error);
   }
-
-  // Check if user with the same email already exists
-  const userExists = await User.findOne({ email });
-  if (userExists) {
-    throw createError(400, "User already exists");
-  }
-
-  // Create new user
-  const newUser = await User.create({
-    name,
-    email,
-    password,
-    loginID,
-    schoolID,
-    isActive,
-    address,
-  });
-
-  // Return user info and generated token
-  res.status(201).json({
-    _id: newUser._id,
-    name: newUser.name,
-    email: newUser.email,
-    token: generateToken(newUser._id),
-  });
 });
 
 // CRUD operations for users with role population
 const getAllUsers = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
-  const Role = getRoleModel(req.schoolDb);
+
   const roleOperations = crudOperations({
     mainModel: User,
-    populateModels: [
-      {
-        field: "role",
-        model: Role,
-        populateFields: [],
-      },
-    ],
   });
   roleOperations.getAll(req, res, next);
 });
 
 const getById = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
-  const Role = getRoleModel(req.schoolDb);
+
   const roleOperations = crudOperations({
     mainModel: User,
-    populateModels: [{ field: "role", model: Role, populateFields: [] }],
   });
   roleOperations.getById(req, res, next);
 });
@@ -139,7 +135,6 @@ const assignRoleToUser = asyncHandler(async (req, res) => {
 const getUsersBySchoolID = asyncHandler(async (req, res) => {
   const { schoolID } = req.user;
   const User = getUserModel(req.usersDb);
-  const Role = getRoleModel(req.schoolDb);
 
   // Find all users with the given schoolID
   const users = await User.find({ schoolID }).lean();
@@ -147,8 +142,7 @@ const getUsersBySchoolID = asyncHandler(async (req, res) => {
   // Populate each user with their role from the Role database
   const populatedUsers = await Promise.all(
     users.map(async (user) => {
-      const role = await Role.findById(user.role);
-      return { ...user, role: role ? role.toObject() : null };
+      return { ...user };
     })
   );
 

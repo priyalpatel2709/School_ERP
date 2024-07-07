@@ -11,6 +11,7 @@ const classModel = new mongoose.Schema(
     },
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
     subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
+    timeTable: { type: mongoose.Schema.Types.ObjectId, ref: "TimeTable" },
     metaData: [
       {
         key: { type: String },
@@ -18,7 +19,7 @@ const classModel = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true } 
+  { timestamps: true }
 );
 
 // Define any instance methods or statics here if needed
