@@ -1,5 +1,11 @@
 const asyncHandler = require("express-async-handler");
-const { getStudentModel, getUserModel, getRoleModel } = require("../models");
+const {
+  getStudentModel,
+  getUserModel,
+  getRoleModel,
+  getClassModel,
+  getTeacherModel,
+} = require("../models");
 const crudOperations = require("../utils/crudOperations");
 const mongoose = require("mongoose");
 
@@ -19,6 +25,8 @@ const getAllStudent = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
   const School = getStudentModel(req.schoolDb);
   const Role = getRoleModel(req.schoolDb);
+  const Class = getClassModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
 
   const roleOperations = crudOperations({
     mainModel: School,
@@ -33,6 +41,11 @@ const getAllStudent = asyncHandler(async (req, res, next) => {
           },
         ],
       },
+      {
+        field: "class",
+        model: Class,
+        select: "classNumber division",
+      },
     ],
   });
   roleOperations.getAll(req, res, next);
@@ -41,7 +54,10 @@ const getAllStudent = asyncHandler(async (req, res, next) => {
 const getStudentById = asyncHandler(async (req, res, next) => {
   const Role = getRoleModel(req.schoolDb);
   const Student = getStudentModel(req.schoolDb);
+  const Class = getClassModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
+
   const roleOperations = crudOperations({
     mainModel: Student,
     populateModels: [
@@ -52,6 +68,18 @@ const getStudentById = asyncHandler(async (req, res, next) => {
           {
             field: "role",
             model: Role,
+          },
+        ],
+      },
+      {
+        field: "class",
+        model: Class,
+        populateFields: [
+          {
+            field: "classTeacher",
+            model: Teacher,
+            select: "user",
+            populateFields: [{ field: "user", model: User, select: "name" }],
           },
         ],
       },
