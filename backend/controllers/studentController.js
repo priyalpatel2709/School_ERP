@@ -132,8 +132,6 @@ const createStudentWithUser = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
   const Role = getRoleModel(req.schoolDb);
 
-  const { roleNumber, classId, calendarId, studentImage, user } = req.body;
-
   try {
     // Retrieve the student role
     let studentRole = await Role.findOne({ roleName: "student" });
@@ -144,6 +142,9 @@ const createStudentWithUser = asyncHandler(async (req, res, next) => {
       studentRole = await studentRole.save();
     }
 
+    // Extract user data from the request body
+    const { user, ...studentData } = req.body;
+
     // Create the new user with the student role
     const newUser = new User({
       ...user,
@@ -153,10 +154,7 @@ const createStudentWithUser = asyncHandler(async (req, res, next) => {
 
     // Create the new student and associate it with the created user
     const newStudent = new Student({
-      roleNumber,
-      class: classId,
-      calendar: calendarId,
-      studentImage,
+      ...studentData,
       user: savedUser._id,
     });
 

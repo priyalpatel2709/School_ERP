@@ -11,8 +11,14 @@ const classModel = new mongoose.Schema(
     },
     students: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
     subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
+    metaData: [
+      {
+        key: { type: String },
+        value: mongoose.Schema.Types.Mixed,
+      },
+    ],
   },
-  { timestamps: true } // Automatically manage createdAt and updatedAt fields
+  { timestamps: true } 
 );
 
 // Define any instance methods or statics here if needed

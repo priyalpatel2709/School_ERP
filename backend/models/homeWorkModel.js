@@ -24,8 +24,14 @@ const homeworkSchema = new mongoose.Schema(
         feedback: { type: String }, // Teacher's feedback
       },
     ],
+    metaData: [
+      {
+        key: { type: String },
+        value: mongoose.Schema.Types.Mixed,
+      },
+    ],
   },
-  { timestamps: true } // Automatically manage createdAt and updatedAt fields
+  { timestamps: true } 
 );
 
 const getHomeworkModel = (connection) => {

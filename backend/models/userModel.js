@@ -3,7 +3,16 @@ const bcrypt = require("bcryptjs");
 
 const userModel = new mongoose.Schema(
   {
-    name: { type: String, required: true },
+    name: {
+      firstName: { type: String },
+      middleName: { type: String },
+      lastName: { type: String },
+    },
+    gender: { type: String, enum: ["male", "female", "other"] },
+    dateOfBirth: { type: Date },
+    cast: { type: String },
+    religion: { type: String },
+    userImage: { type: String },
     email: { type: String, unique: true, required: true },
     loginID: { type: String, unique: true },
     password: { type: String },
@@ -14,22 +23,33 @@ const userModel = new mongoose.Schema(
     age: { type: Number },
     address: {
       permanentAddress: {
-        street: { type: String,  },
-        city: { type: String,  },
-        state: { type: String,  },
-        zip: { type: String,  },
-        country: { type: String,  },
+        street: { type: String },
+        city: { type: String },
+        state: { type: String },
+        zip: { type: String },
+        country: { type: String },
       },
       currentAddress: {
-        street: { type: String,  },
-        city: { type: String,  },
-        state: { type: String,  },
-        zip: { type: String,  },
-        country: { type: String,  },
+        street: { type: String },
+        city: { type: String },
+        state: { type: String },
+        zip: { type: String },
+        country: { type: String },
       },
     },
+    medicalRecode: {
+      bloodGoop: { type: String },
+      height: { type: Number },
+      weight: { type: Number },
+    },
+    metaData: [
+      {
+        key: { type: String },
+        value: mongoose.Schema.Types.Mixed,
+      },
+    ],
   },
-  { timestamps: true } // Corrected spelling
+  { timestamps: true }
 );
 
 userModel.methods.matchPassword = async function (enteredPassword) {

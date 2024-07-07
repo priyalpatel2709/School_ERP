@@ -12,8 +12,14 @@ const subjectModel = new mongoose.Schema(
       required: true,
       default: "theory",
     },
+    metaData: [
+      {
+        key: { type: String },
+        value: mongoose.Schema.Types.Mixed,
+      },
+    ],
   },
-  { timestamps: true } // Automatically manage createdAt and updatedAt fields
+  { timestamps: true }
 );
 
 const getSubjectModel = (connection) => {

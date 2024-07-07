@@ -110,13 +110,11 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
   const Role = getRoleModel(req.schoolDb);
 
-  const { classes, leaves, salary, subjects, user, calendar } = req.body;
-
   try {
-    // Retrieve the student role
+    // Retrieve the teacher role
     let teacherRole = await Role.findOne({ roleName: "teacher" });
 
-    // If the student role does not exist, create it
+    // If the teacher role does not exist, create it
     if (!teacherRole) {
       teacherRole = new Role({
         roleName: "teacher",
@@ -124,20 +122,20 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
       });
       teacherRole = await teacherRole.save();
     }
-    // Create the new user with the Teacher role
+
+    // Extract user data and other teacher-related data from the request body
+    const { user, ...teacherData } = req.body;
+
+    // Create the new user with the teacher role
     const newUser = new User({
       ...user,
       role: teacherRole._id,
     });
     const savedUser = await newUser.save();
 
-    // Create the new student and associate it with the created user
+    // Create the new teacher and associate it with the created user
     const newTeacher = new Teacher({
-      classes,
-      leaves,
-      salary,
-      subjects,
-      calendar,
+      ...teacherData,
       user: savedUser._id,
     });
 
@@ -147,7 +145,7 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
   } catch (err) {
     console.error("Error in createTeacherWithUser:", err); // Log the error for debugging
     next(
-      createError(500, "Error creating student with user", {
+      createError(500, "Error creating teacher with user", {
         error: err.message,
       })
     );
