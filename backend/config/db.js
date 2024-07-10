@@ -29,8 +29,8 @@ const connectToDatabase = async (schoolId) => {
   }
 
   const uri = `mongodb://localhost:27017/school_${schoolId}`;
-  const connection = mongoose.createConnection(getDatabaseUri(schoolId));
-  // const connection = mongoose.createConnection(uri);
+  // const connection = mongoose.createConnection(getDatabaseUri(schoolId));
+  const connection = mongoose.createConnection(uri);
   console.log(`Connected to DB for school ${schoolId}`.underline.bgGreen);
   connections[schoolId] = connection;
   return connection;
