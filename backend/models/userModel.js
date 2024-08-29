@@ -44,6 +44,7 @@ const userModel = new mongoose.Schema(
     },
     roleName: { type: String, required: true },
     access: [{ type: String }],
+    notifications: [{ type: mongoose.Schema.Types.ObjectId, ref: "Notification" }],
     metaData: [
       {
         key: { type: String },

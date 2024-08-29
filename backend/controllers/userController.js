@@ -1,7 +1,8 @@
 const asyncHandler = require("express-async-handler");
 const generateToken = require("../config/generateToken");
 const crudOperations = require("../utils/crudOperations");
-const { getUserModel } = require("../models");
+const { getUserModel, getNotificationModel } = require("../models");
+const { populate } = require("dotenv");
 
 // Authenticate user and generate token
 const authUser = asyncHandler(async (req, res) => {
@@ -56,7 +57,7 @@ const registerUser = asyncHandler(async (req, res, next) => {
       token: generateToken(newUser._id),
     });
   } catch (error) {
-    console.log('File: userController.js', 'Line 59:', error.message);
+    console.log("File: userController.js", "Line 59:", error.message);
     // Handle validation errors
     if (error.name === "ValidationError") {
       return next(createError(400, error.message));
@@ -69,18 +70,32 @@ const registerUser = asyncHandler(async (req, res, next) => {
 // CRUD operations for users with role population
 const getAllUsers = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
+  const Notification = getNotificationModel(req.schoolDb);
 
   const roleOperations = crudOperations({
     mainModel: User,
+    populateModels: [
+      {
+        field: "notifications",
+        model: Notification,
+      },
+    ],
   });
   roleOperations.getAll(req, res, next);
 });
 
 const getById = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
+  const Notification = getNotificationModel(req.schoolDb);
 
   const roleOperations = crudOperations({
     mainModel: User,
+    populateModels: [
+      {
+        field: "notifications",
+        model: Notification,
+      },
+    ],
   });
   roleOperations.getById(req, res, next);
 });

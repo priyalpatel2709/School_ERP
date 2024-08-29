@@ -15,6 +15,7 @@ const {
   teacherRoutes,
   subjectRoutes,
   timeTableRoutes,
+  notificationRoutes
 } = require("./routes");
 
 //env file connect
@@ -41,6 +42,7 @@ app.use("/api/v1/homeWork", homeWorkRoutes);
 app.use("/api/v1/teacher", teacherRoutes);
 app.use("/api/v1/subject", subjectRoutes);
 app.use("/api/v1/timeTable", timeTableRoutes);
+app.use("/api/v1/notification", notificationRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

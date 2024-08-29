@@ -7,6 +7,7 @@ const studentRoutes = require("./studentRoute");
 const teacherRoutes = require("./teacherRoute");
 const subjectRoutes = require("./subjectRoute");
 const timeTableRoutes = require("./timeTableRoute");
+const notificationRoutes = require("./notificationRoute");
 
 module.exports = {
   userRouters,
@@ -18,4 +19,5 @@ module.exports = {
   teacherRoutes,
   subjectRoutes,
   timeTableRoutes,
+  notificationRoutes,
 };
