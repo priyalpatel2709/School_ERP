@@ -1,7 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const crudOperations = require("../utils/crudOperations");
 
-
 const {
   getNotificationModel,
   getUserModel,
@@ -263,6 +262,21 @@ const cleanupExpiredNotifications = asyncHandler(async (req, res) => {
     message: "Expired notifications cleaned up successfully.",
     deletedCount: deleteResult.deletedCount,
   });
+});
+
+const getNotificationForUser = asyncHandler(async (req, res) => {
+  const { schoolDb, usersDb } = req;
+  const Notification = getNotificationModel(schoolDb);
+  const User = getUserModel(usersDb);
+  const { userId } = req.params;
+  const user = await User.findById(userId);
+  if (!user) {
+    return res.status(404).json({ message: "User not found" });
+  }
+  const notifications = await Notification.find({
+    recipients: { $in: [userId] },
+  });
+  res.status(200).json({ notifications });
 });
 
 // const scheduleNotificationCleanup = (cron, cleanupFunction) => {

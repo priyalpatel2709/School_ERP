@@ -6,6 +6,7 @@ const {
   getRoleModel,
   getSubjectModel,
   getTimeTableModel,
+  getStudentModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 
@@ -25,6 +26,7 @@ const getAllTeacher = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
   const Class = getClassModel(req.schoolDb);
   const Subject = getSubjectModel(req.schoolDb);
+  const Student = getStudentModel(req.schoolDb);
 
   const teacherOperations = crudOperations({
     mainModel: Teacher,
@@ -37,6 +39,26 @@ const getAllTeacher = asyncHandler(async (req, res, next) => {
       {
         field: "classes",
         model: Class,
+        populateFields: [
+          {
+            field: "students",
+            model: Student,
+            select: "roleNumber user",
+            populateFields: [
+              {
+                field: "user",
+                model: User,
+                select: "name email",
+              },
+            ],
+          },
+
+          {
+            field: "subjects",
+            model: Subject,
+            select: "name code type",
+          },
+        ],
       },
       {
         field: "subjects",
@@ -52,6 +74,10 @@ const getTeacherById = asyncHandler(async (req, res, next) => {
   const Teacher = getTeacherModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
   const Class = getClassModel(req.schoolDb);
+  const Student = getStudentModel(req.schoolDb);
+  const Subject = getSubjectModel(req.schoolDb);
+
+
 
   const teacherOperations = crudOperations({
     mainModel: Teacher,
@@ -59,13 +85,35 @@ const getTeacherById = asyncHandler(async (req, res, next) => {
       {
         field: "user",
         model: User,
-        select: "-password",
-        populateFields: [],
+        select: "name",
       },
       {
         field: "classes",
         model: Class,
-        populateFields: [],
+        populateFields: [
+          {
+            field: "students",
+            model: Student,
+            select: "roleNumber user",
+            populateFields: [
+              {
+                field: "user",
+                model: User,
+                select: "name email",
+              },
+            ],
+          },
+
+          {
+            field: "subjects",
+            model: Subject,
+            select: "name code type",
+          },
+        ],
+      },
+      {
+        field: "subjects",
+        model: Subject,
       },
     ],
   });
