@@ -40,7 +40,8 @@ const connectToDatabase = async (schoolId) => {
       delete connections[schoolId];
     }
 
-    const uri = `mongodb://localhost:27017/school_${schoolId}`;
+    // const uri = `mongodb://localhost:27017/school_${schoolId}`;
+    const uri = `${getDatabaseUri(schoolId)}`;
     
     // Create connection with optimized pooling settings
     const connection = mongoose.createConnection(uri, {
