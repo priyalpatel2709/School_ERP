@@ -1,0 +1,15 @@
+{
+    "keep": {
+        "days": true,
+        "amount": 14
+    },
+    "auditLog": "C:\\Users\\Priyal Patel\\src\\private_repos\\School_ERP\\backend\\logs\\.ca7e96116fe7b8df6aeb7ec4280c1fbf09f3d6f2-audit.json",
+    "files": [
+        {
+            "date": 1743596133023,
+            "name": "C:\\Users\\Priyal Patel\\src\\private_repos\\School_ERP\\backend\\logs\\error-2025-04-02.log",
+            "hash": "bf64034324f47f4f9072bdcbf58975eef007322ed88132dfdc1ea3f8bc78f39a"
+        }
+    ],
+    "hashType": "sha256"
+}

@@ -1,4 +1,4 @@
-const connectToDatabase = require("../config/db");
+const {connectToDatabase} = require("../config/db");
 
 const identifyTenant = async (req, res, next) => {
   let schoolId =

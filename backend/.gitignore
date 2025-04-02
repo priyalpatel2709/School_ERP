@@ -2,3 +2,6 @@
 node_modules/
 
 .env.dovloper
+./logs
+*.log
+/error.log
