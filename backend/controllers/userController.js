@@ -24,6 +24,7 @@ const authUser = asyncHandler(async (req, res) => {
     email: user.email,
     token: generateToken(user._id),
     schoolID: user.schoolID,
+    roleName: user.roleName,
   });
 });
 
