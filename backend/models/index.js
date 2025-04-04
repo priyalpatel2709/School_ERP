@@ -8,6 +8,9 @@ const getTeacherModel = require("./teacherModel");
 const getSubjectModel = require("./subjectModel");
 const getTimeTableModel = require("./timeTableModel");
 const getNotificationModel = require("./notificationModel");
+const transportModels = require("./transport");
+const Transport = require('./transport');
+const Library = require('./library');
 
 module.exports = {
   getHomeworkModel,
@@ -20,4 +23,7 @@ module.exports = {
   getSubjectModel,
   getTimeTableModel,
   getNotificationModel,
+  ...transportModels,
+  Transport,
+  Library
 };

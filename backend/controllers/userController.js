@@ -59,7 +59,6 @@ const registerUser = asyncHandler(async (req, res, next) => {
       token: generateToken(newUser._id),
     });
   } catch (error) {
-    console.log("File: userController.js", "Line 59:", error.message);
     // Handle validation errors
     if (error.name === "ValidationError") {
       return next(createError(400, error.message));

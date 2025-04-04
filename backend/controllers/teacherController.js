@@ -77,8 +77,6 @@ const getTeacherById = asyncHandler(async (req, res, next) => {
   const Student = getStudentModel(req.schoolDb);
   const Subject = getSubjectModel(req.schoolDb);
 
-
-
   const teacherOperations = crudOperations({
     mainModel: Teacher,
     populateModels: [
@@ -213,7 +211,6 @@ const searchTeacher = asyncHandler(async (req, res, next) => {
 
     res.status(200).json(teacher);
   } catch (error) {
-    console.log("File: teacherController.js", "Line 183:", error);
     next(createError(500, "Error fetching homework", { error: error.message }));
   }
 });
@@ -277,6 +274,47 @@ const getTimeTableByTeacherId = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getTeacherByUserId = asyncHandler(async (req, res, next) => {
+  const Teacher = getTeacherModel(req.schoolDb);
+  const Class = getClassModel(req.schoolDb);
+  const Subject = getSubjectModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+
+  // Set query parameters for getByField operation
+  req.query.fieldKey = "user";
+  req.query.fieldValue = req.params.id;
+
+  const studentOperations = crudOperations({
+    mainModel: Teacher,
+    populateModels: [
+      {
+        field: "user",
+        model: User,
+        select: "name email",
+      },
+      {
+        field: "classes",
+        model: Class,
+        select: "classNumber division subjects",
+        populateFields: [
+          {
+            field: "subjects",
+            model: Subject,
+            select: "name description",
+          },
+        ],
+      },
+      {
+        field: "subjects",
+        model: Subject,
+        select: "name description",
+      },
+    ],
+  });
+
+  studentOperations.getByField(req, res, next);
+});
+
 module.exports = {
   createTeacher,
   getAllTeacher,
@@ -287,4 +325,5 @@ module.exports = {
   createTeacherWithUser,
   searchTeacher,
   getTimeTableByTeacherId,
+  getTeacherByUserId,
 };

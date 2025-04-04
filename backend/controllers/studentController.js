@@ -5,6 +5,7 @@ const {
 
   getClassModel,
   getTeacherModel,
+  getSubjectModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 const mongoose = require("mongoose");
@@ -133,6 +134,43 @@ const createStudentWithUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+//get student by user id
+const getStudentByUserId = asyncHandler(async (req, res, next) => {
+  const Student = getStudentModel(req.schoolDb);
+  const Class = getClassModel(req.schoolDb);
+  const Subjects = getSubjectModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+
+  // Set query parameters for getByField operation
+  req.query.fieldKey = "user";
+  req.query.fieldValue = req.params.id;
+
+  const studentOperations = crudOperations({
+    mainModel: Student,
+    populateModels: [
+      {
+        field: "user",
+        model: User,
+        select: "name email",
+      },
+      {
+        field: "class",
+        model: Class,
+        select: "classNumber division subjects",
+        populateFields: [
+          {
+            field: "subjects",
+            model: Subjects,
+            select: "name description",
+          },
+        ],
+      },
+    ],
+  });
+
+  studentOperations.getByField(req, res, next);
+});
+
 module.exports = {
   createStudent,
   getAllStudent,
@@ -141,4 +179,5 @@ module.exports = {
   deleteByStudentId,
   getStudentById,
   createStudentWithUser,
+  getStudentByUserId,
 };
