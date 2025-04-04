@@ -67,7 +67,6 @@ const crudOperations = (models) => {
         const savedDocument = await newDocument.save();
         res.status(201).json(savedDocument);
       } catch (err) {
-        console.log('File: crudOperations.js', 'Line 70:', err.message);
         next(
           createError(500, "Error creating document", { error: err.message })
         );
@@ -138,6 +137,49 @@ const crudOperations = (models) => {
         next(
           createError(500, "Error deleting documents", { error: err.message })
         );
+      }
+    },
+
+    // Get document by any field
+    getByField: async (req, res, next) => {
+      try {
+        const { fieldKey, fieldValue } = req.query;
+
+        if (!fieldKey || !fieldValue) {
+          return next(createError(400, "Field key and value are required"));
+        }
+
+        // Create query object dynamically
+        const query = {};
+        query[fieldKey] = fieldValue;
+
+        // Handle ObjectId conversion if needed
+        if (
+          fieldKey.includes("_id") ||
+          fieldKey.endsWith("Id") ||
+          fieldKey === "user"
+        ) {
+          try {
+            const mongoose = require("mongoose");
+            query[fieldKey] = new mongoose.Types.ObjectId(fieldValue);
+          } catch (error) {
+            // If conversion fails, use the original value
+            next(
+              createError(500, "Error fetching data", { error: err.message })
+            );
+          }
+        }
+        let findQuery = mainModel.findOne(query);
+        findQuery = await populateNestedFields(findQuery, populateModels);
+        const document = await findQuery;
+
+        if (document) {
+          res.status(200).json(document);
+        } else {
+          next(createError(404, "Document not found"));
+        }
+      } catch (err) {
+        next(createError(500, "Error fetching data", { error: err.message }));
       }
     },
   };

@@ -12,6 +12,7 @@ const {
   createTeacherWithUser,
   searchTeacher,
   getTimeTableByTeacherId,
+  getTeacherByUserId,
 } = require("../controllers/teacherController");
 
 router.post("/", identifyTenant, protect, createTeacher);
@@ -33,4 +34,6 @@ router.post(
   protect,
   createTeacherWithUser
 );
+
+router.get("/byUser/:id", identifyTenant, protect, getTeacherByUserId);
 module.exports = router;

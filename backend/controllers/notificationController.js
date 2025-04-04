@@ -162,7 +162,6 @@ const sendNotification = asyncHandler(async (req, res) => {
     // Use a Set to avoid duplicates
     const userIds = new Set();
     classesFound.forEach((cls) => {
-      console.log("File: notificationController.js", "Line 174:", cls);
       if (cls.classTeacher && cls.classTeacher.user) {
         userIds.add(cls.classTeacher.user._id.toString());
       }

@@ -18,7 +18,6 @@ const createHomeWork = asyncHandler(async (req, res, next) => {
     populateModels: [],
   });
 
- 
   HomeWorkOperations.create(req, res, next);
 });
 
@@ -65,7 +64,6 @@ const getAllHomeWork = asyncHandler(async (req, res, next) => {
     ],
   });
 
- 
   HomeWorkOperations.getAll(req, res, next);
 });
 
@@ -203,6 +201,51 @@ const getHomeworkByStudent = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getHomeWorkByTeacherId = asyncHandler(async (req, res, next) => {
+  const Homework = getHomeworkModel(req.schoolDb);
+  const Student = getStudentModel(req.schoolDb);
+  const Class = getClassModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+
+  try {
+    // const homework = await Homework.find({ assignedBy: req.params.teacherId });
+
+    // res.status(200).json(homework);
+    const studentOperations = crudOperations({
+      mainModel: Homework,
+      populateModels: [
+        {
+          field: "submissions.student",
+          model: Student,
+          select: "roleNumber class user",
+          populateFields: [
+            {
+              field: "user",
+              model: User,
+              select: "name email",
+            },
+            {
+              field: "class",
+              model: Class,
+              select: "classNumber division",
+            },
+          ],
+        },
+        {
+          field: "class",
+          model: Class,
+          select: "classNumber division",
+        },
+      ],
+    });
+
+    studentOperations.getByField(req, res, next);
+  } catch (error) {
+    console.error("Error fetching homework by teacher ID:", error);
+    next(error);
+  }
+});
+
 module.exports = {
   createHomeWork,
   getAllHomeWork,
@@ -213,4 +256,5 @@ module.exports = {
   submitHomework,
   gradeHomework,
   getHomeworkByStudent,
+  getHomeWorkByTeacherId,
 };

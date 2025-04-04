@@ -10,10 +10,12 @@ const {
   deleteByStudentId,
   getStudentById,
   createStudentWithUser,
+  getStudentByUserId,
 } = require("../controllers/studentController");
 
 router.post("/", identifyTenant, protect, createStudent);
 router.get("/", identifyTenant, protect, getAllStudent);
+router.get("/byUser/:id", identifyTenant, protect, getStudentByUserId);
 router.get("/:id", identifyTenant, protect, getStudentById);
 router.put("/:id", identifyTenant, protect, updateStudent);
 router.delete("/", identifyTenant, protect, deleteAllStudent);
@@ -24,4 +26,5 @@ router.post(
   protect,
   createStudentWithUser
 );
+
 module.exports = router;
