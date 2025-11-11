@@ -8,7 +8,7 @@ const getSubjectModel = require("../models/subjectModel");
 const getSchoolDetailModel = require("../models/schoolDetailModel");
 const getTimeTableModel = require("../models/timeTableModel");
 
-const connectToDatabase = require("../config/db");
+const {connectToDatabase} = require("../config/db");
 let userDB, schoolDB;
 
 const connectDB = async () => {
