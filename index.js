@@ -51,7 +51,7 @@ app.use(requestLogger);
 app.use(sanitizeRequest);
 
 // Health check endpoint
-app.get("/health", healthCheck);
+app.get("/", healthCheck);
 
 // API routes
 app.use("/api/v1/user", userRouters);
