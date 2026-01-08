@@ -12,11 +12,13 @@ const {
   createTeacherWithUser,
   searchTeacher,
   getTimeTableByTeacherId,
+  assignSubjects
 } = require("../controllers/teacherController");
 
 router.post("/", identifyTenant, protect, createTeacher);
 router.get("/", identifyTenant, protect, getAllTeacher);
 router.get("/search", identifyTenant, protect, searchTeacher);
+router.post("/assign-subjects", identifyTenant, protect, assignSubjects); // New Route
 router.get("/:id", identifyTenant, protect, getTeacherById);
 router.get(
   "/getTimeTableByTeacherId/:teacherId",

@@ -1,11 +1,12 @@
-const {connectToDatabase} = require("../config/db");
+const { connectToDatabase } = require("../config/db");
 
 const identifyTenant = async (req, res, next) => {
   let schoolId =
     req.body.schoolId || req.header("X-School-Id") || req.query.schoolId;
 
   // Default to "Users" database if no schoolId is provided and base URL is "/user"
-  if (!schoolId && req.baseUrl === "/user") {
+  console.log("schoolId ", schoolId, !schoolId, req.baseUrl);
+  if (!schoolId && req.baseUrl === "/api/v1/user") {
     schoolId = "Users";
   }
 

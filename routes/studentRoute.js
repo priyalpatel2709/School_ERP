@@ -10,6 +10,8 @@ const {
   deleteByStudentId,
   getStudentById,
   createStudentWithUser,
+  linkSibling,
+  createParentAccount
 } = require("../controllers/studentController");
 
 router.post("/", identifyTenant, protect, createStudent);
@@ -24,4 +26,8 @@ router.post(
   protect,
   createStudentWithUser
 );
+// Phase 1: New Routes
+router.post("/link-sibling", identifyTenant, protect, linkSibling);
+router.post("/create-parent-account", identifyTenant, protect, createParentAccount);
+
 module.exports = router;

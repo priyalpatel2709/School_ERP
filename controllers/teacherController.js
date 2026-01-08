@@ -77,8 +77,6 @@ const getTeacherById = asyncHandler(async (req, res, next) => {
   const Student = getStudentModel(req.schoolDb);
   const Subject = getSubjectModel(req.schoolDb);
 
-
-
   const teacherOperations = crudOperations({
     mainModel: Teacher,
     populateModels: [
@@ -187,6 +185,45 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
   }
 });
 
+const assignSubjects = asyncHandler(async (req, res, next) => {
+  const Teacher = getTeacherModel(req.schoolDb);
+  const Subject = getSubjectModel(req.schoolDb);
+  const { teacherId, subjectIds } = req.body;
+
+  try {
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) return next(createError(404, "Teacher not found"));
+
+    if (teacher.employment.status !== "Active") {
+      return next(
+        createError(400, "Cannot assign subjects to inactive teacher")
+      );
+    }
+
+    // Validate subjects
+    const subjects = await Subject.find({ _id: { $in: subjectIds } });
+    if (subjects.length !== subjectIds.length) {
+      return next(createError(400, "One or more subjects invalid"));
+    }
+
+    // Add without duplicates
+    const uniqueIds = new Set(teacher.subjects.map((s) => s.toString()));
+    subjectIds.forEach((id) => uniqueIds.add(id));
+
+    teacher.subjects = Array.from(uniqueIds);
+    await teacher.save();
+
+    res
+      .status(200)
+      .json({
+        message: "Subjects assigned successfully",
+        subjects: teacher.subjects,
+      });
+  } catch (err) {
+    next(createError(500, err.message));
+  }
+});
+
 const searchTeacher = asyncHandler(async (req, res, next) => {
   const Teacher = getTeacherModel(req.schoolDb);
   const User = getUserModel(req.usersDb);
@@ -220,12 +257,19 @@ const searchTeacher = asyncHandler(async (req, res, next) => {
 
 const getTimeTableByTeacherId = asyncHandler(async (req, res, next) => {
   const TimeTable = getTimeTableModel(req.schoolDb);
-
+  const Teacher = getTeacherModel(req.schoolDb);
   const Subject = getSubjectModel(req.schoolDb);
 
-  const teacherId = req.params.teacherId;
+  let teacherId = req.params.teacherId;
 
   try {
+    // Check if the provided ID is a User ID (by checking if a Teacher exists with this user ID)
+    const teacherProfile = await Teacher.findOne({ user: teacherId });
+    if (teacherProfile) {
+      teacherId = teacherProfile._id.toString();
+    }
+    // If not found by user, assume it is already a Teacher ID (or invalid)
+
     const timeTables = await TimeTable.find({
       $or: [
         { "week.Monday.teacher": teacherId },
@@ -287,4 +331,5 @@ module.exports = {
   createTeacherWithUser,
   searchTeacher,
   getTimeTableByTeacherId,
+  assignSubjects,
 };

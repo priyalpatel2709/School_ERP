@@ -6,6 +6,33 @@ const teacherModel = mongoose.Schema(
     classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
     calendar: { type: mongoose.Schema.Types.ObjectId, ref: "Calendar" }, // todo create calendar
     subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
+
+    // Phase 2: Qualification Details
+    qualifications: [
+      {
+        degree: { type: String, required: true }, // e.g., "B.Ed", "M.Sc"
+        university: { type: String, required: true },
+        yearOfPassing: { type: Number, required: true },
+        grade: { type: String } // e.g. "A+", "First Class"
+      }
+    ],
+
+    // Phase 2: Employment Details
+    employment: {
+      dateOfJoining: { type: Date, required: true },
+      jobType: {
+        type: String,
+        enum: ["Permanent", "Contract", "Visiting"],
+        default: "Permanent"
+      },
+      status: {
+        type: String,
+        enum: ["Active", "Resigned", "Suspended"],
+        default: "Active"
+      },
+      resignationDate: { type: Date }
+    },
+
     leaves: {
       annual: { type: Number, default: 0, min: 0 },
       sick: { type: Number, default: 0, min: 0 },
@@ -24,8 +51,8 @@ const teacherModel = mongoose.Schema(
   { timestamps: true }
 );
 
-const getStudentModel = (connection) => {
+const getTeacherModel = (connection) => {
   return connection.model("Teacher", teacherModel);
 };
 
-module.exports = getStudentModel;
+module.exports = getTeacherModel;

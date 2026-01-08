@@ -8,10 +8,14 @@ const studentModel = mongoose.Schema(
     studentImage: {
       type: String,
     },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    academicYear: { type: Date },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // The Student's own login
+    academicYear: { type: String }, // Changed to String to match Class Model (e.g. "2023-2024")
     admissionDate: { type: Date },
-    admissionNumber: { type: Number },
+    admissionNumber: { type: Number, unique: true }, // Ensure unique admission number
+
+    // Phase 1: Siblings for Fee Discounts
+    siblings: [{ type: mongoose.Schema.Types.ObjectId, ref: "Student" }],
+
     previousSchoolDetails: [
       {
         Detail: { type: String },
@@ -30,18 +34,23 @@ const studentModel = mongoose.Schema(
         IfscNumber: { type: String },
       },
     ],
+
+    // Phase 1: Enterprise Parent Portal Support
     guardianInfo: [
       {
-        name: { type: String },
+        relation: { type: String, enum: ["Father", "Mother", "Guardian"], required: true },
+        name: { type: String, required: true },
         email: { type: String },
-        relation: { type: String },
         phone: { type: String },
-        photo: { type: String },
         occupation: { type: String },
+        photo: { type: String },
         address: { type: String },
+        // Link to a system User account for Parent Portal Login
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        isPrimaryContact: { type: Boolean, default: false }
       },
     ],
-    //todo other info
+
     metaData: [
       {
         key: { type: String },

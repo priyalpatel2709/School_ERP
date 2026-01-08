@@ -46,6 +46,19 @@ const crudOperations = (models) => {
         if (document) {
           res.status(200).json(document);
         } else {
+          // Fallback: Try finding by User ID (if model has 'user' field)
+          // This is useful for fetching Profile by User ID
+          try {
+            let queryUser = mainModel.findOne({ user: req.params.id });
+            queryUser = await populateNestedFields(queryUser, populateModels);
+            const docByUser = await queryUser;
+            if (docByUser) {
+              return res.status(200).json(docByUser);
+            }
+          } catch (ignore) {
+            // Ignore error if cast fails (not a valid obj id)
+          }
+
           next(createError(404, "Document not found"));
         }
       } catch (err) {
