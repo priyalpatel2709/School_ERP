@@ -29,6 +29,15 @@ const updateSchoolDetail = asyncHandler(async (req, res, next) => {
   schoolDetailOperations.updateById(req, res, next);
 });
 
+const deleteSchoolDetail = asyncHandler(async (req, res, next) => {
+  const School = getSchoolDetailModel(req.schoolDb);
+  const schoolDetailOperations = crudOperations({
+    mainModel: School,
+    populateModels: [],
+  });
+  schoolDetailOperations.deleteById(req, res, next);
+});
+
 module.exports = {
   addSchoolDetail,
   getSchoolDetail,

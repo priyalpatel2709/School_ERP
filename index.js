@@ -4,6 +4,8 @@ const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const helmet = require("helmet");
+const hpp = require("hpp");
+const compression = require("compression");
 
 // Import middlewares
 const { requestLogger, errorLogger } = require("./helper/logger");
@@ -31,15 +33,23 @@ const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 // Load environment variables
 dotenv.config();
 
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpecs = require('./config/swagger');
+
 const app = express();
 
-// Basic middleware
-app.use(express.json());
-app.use(bodyParser.json());
-app.use(cors());
-
-// Security middleware
+// Security & Performance middleware
 app.use(helmet());
+app.use(cors());
+app.use(compression()); // Compress all responses
+
+// Body parsing
+app.use(express.json({ limit: '10kb' })); // Limit body size
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }));
+
+// Advanced Security
+app.use(hpp()); // Protect against HTTP Parameter Pollution attacks
 app.use(securityHeaders);
 app.use(limiter);
 
@@ -52,6 +62,9 @@ app.use(sanitizeRequest);
 
 // Health check endpoint
 app.get("/", healthCheck);
+
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // API routes
 app.use("/api/v1/user", userRouters);

@@ -46,22 +46,23 @@ const logger = winston.createLogger({
       ),
     }),
     // Write all logs error (and above) to error.log
-    // new DailyRotateFile({
-    //   filename: path.join(__dirname, "../logs/error-%DATE%.log"),
-    //   datePattern: "YYYY-MM-DD",
-    //   zippedArchive: true,
-    //   maxSize: "20m",
-    //   maxFiles: "14d",
-    //   level: "error",
-    // }),
-    // // Write all logs to combined.log
-    // new DailyRotateFile({
-    //   filename: path.join(__dirname, "../logs/combined-%DATE%.log"),
-    //   datePattern: "YYYY-MM-DD",
-    //   zippedArchive: true,
-    //   maxSize: "20m",
-    //   maxFiles: "14d",
-    // }),
+    // Write all logs error (and above) to error.log
+    new DailyRotateFile({
+      filename: path.join(__dirname, "../logs/error-%DATE%.log"),
+      datePattern: "YYYY-MM-DD",
+      zippedArchive: true,
+      maxSize: "20m",
+      maxFiles: "14d",
+      level: "error",
+    }),
+    // Write all logs to combined.log
+    new DailyRotateFile({
+      filename: path.join(__dirname, "../logs/combined-%DATE%.log"),
+      datePattern: "YYYY-MM-DD",
+      zippedArchive: true,
+      maxSize: "20m",
+      maxFiles: "14d",
+    }),
   ],
 });
 
