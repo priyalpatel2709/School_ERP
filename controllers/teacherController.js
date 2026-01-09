@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const createError = require("http-errors");
 const {
   getTeacherModel,
   getUserModel,
@@ -160,9 +161,13 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
     // Extract user data and other teacher-related data from the request body
     const { user, ...teacherData } = req.body;
 
+
+
     // Create the new user with the teacher role
     const newUser = new User({
       ...user,
+      roleName: "Teacher",
+      schoolID: req.user.schoolID,
     });
     const savedUser = await newUser.save();
 

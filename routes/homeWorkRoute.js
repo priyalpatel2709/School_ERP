@@ -10,6 +10,7 @@ const {
   gradeHomework,
   getHomeworkByStudent,
   getHomeworkByTeacher,
+  getHomeworkSubmissionStatus
 } = require("../controllers/homeWorkController");
 const identifyTenant = require("../middleware/IdentificationMiddleware");
 const { protect } = require("../middleware/authMiddleware");
@@ -37,6 +38,12 @@ router.get(
   identifyTenant,
   protect,
   getHomeworkByTeacher
+);
+router.get(
+  "/submission-status/:homeworkId",
+  identifyTenant,
+  protect,
+  getHomeworkSubmissionStatus
 );
 
 module.exports = router;

@@ -222,15 +222,17 @@ const getHomeworkByStudent = asyncHandler(async (req, res, next) => {
   const User = getUserModel(req.usersDb);
   const Student = getStudentModel(req.schoolDb);
   const Subject = getSubjectModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
 
   const { studentId } = req.params;
 
   try {
     // 1. Get Student Class info
-    const student = await Student.find({ user: studentId });
+    const student = await Student.findOne({ user: studentId });
     if (!student) {
       return next(createError(404, "Student not found"));
     }
+
 
     // 2. Fetch all Published homework for this class
     const homeworks = await Homework.find(
@@ -243,11 +245,12 @@ const getHomeworkByStudent = asyncHandler(async (req, res, next) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "assignedBy",
-        populate: {
-          path: "user",
-          model: User,
-          select: "name",
-        },
+        model: Teacher,
+        // populate: {
+        //   path: "assignedBy.user",
+        //   model: User,
+        //   // select: "name",
+        // },
       })
       .populate({
         path: "subject",
@@ -275,7 +278,7 @@ const getHomeworkByStudent = asyncHandler(async (req, res, next) => {
         title: hw.title,
         description: hw.description,
         subject: hw.subject,
-        teacher: hw.assignedBy?.user?.name,
+        // teacher: hw.assignedBy?.user?.name,
         dueDate: hw.dueDate,
         attachments: hw.attachments,
         mySubmission: mySub,
@@ -334,6 +337,63 @@ const getHomeworkByTeacher = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getHomeworkSubmissionStatus = asyncHandler(async (req, res, next) => {
+  const Homework = getHomeworkModel(req.schoolDb);
+  const Student = getStudentModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+
+  const { homeworkId } = req.params;
+
+  try {
+    const homework = await Homework.findById(homeworkId).populate("submissions.student");
+    if (!homework) return next(createError(404, "Homework not found"));
+
+    // Get all students in the assigned classes
+    const allStudents = await Student.find({ class: { $in: homework.class } })
+      .populate({ path: "user", model: User, select: "name" })
+      .lean();
+
+    // Map submissions for easy lookup
+    const submissionMap = new Map();
+    homework.submissions.forEach(sub => {
+      if (sub.student) submissionMap.set(sub.student._id.toString(), sub);
+    });
+
+    const result = allStudents.map(std => {
+      const sub = submissionMap.get(std._id.toString());
+      let status = "Pending";
+      if (sub) {
+        status = sub.isLate ? "Submitted Late" : "Submitted";
+        if (sub.grade) status = "Graded";
+      } else if (homework.dueDate && new Date() > new Date(homework.dueDate)) {
+        status = "Overdue";
+      }
+
+      return {
+        studentId: std._id,
+        name: std.user?.name,
+        rollNumber: std.roleNumber, // Check spelling in model
+        status: status,
+        submissionDate: sub?.submittedAt,
+        attachments: sub?.attachments || [],
+        grade: sub?.grade,
+        feedback: sub?.feedback
+      };
+    });
+
+    res.status(200).json({
+      homeworkTitle: homework.title,
+      totalStudents: allStudents.length,
+      submittedCount: homework.submissions.length,
+      students: result
+    });
+
+  } catch (err) {
+    console.error("Error in getHomeworkSubmissionStatus:", err);
+    next(createError(500, err.message));
+  }
+});
+
 module.exports = {
   createHomeWork,
   getAllHomeWork,
@@ -345,4 +405,5 @@ module.exports = {
   gradeHomework,
   getHomeworkByStudent,
   getHomeworkByTeacher,
+  getHomeworkSubmissionStatus
 };

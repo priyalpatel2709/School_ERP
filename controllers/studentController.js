@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const createError = require("http-errors");
 const {
   getStudentModel,
   getUserModel,
@@ -123,6 +124,7 @@ const createStudentWithUser = asyncHandler(async (req, res, next) => {
     // 2. Create the new user with the student role
     const newUser = new User({
       ...user,
+      schoolID: req.user.schoolID,
     });
     const savedUser = await newUser.save();
 

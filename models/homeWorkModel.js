@@ -10,11 +10,12 @@ const homeworkSchema = new mongoose.Schema(
       enum: ["Draft", "Published", "Archived"],
       default: "Draft",
     },
-    class: {
+    // Updated to Array for Multi-Class Assignment (e.g. 10-A and 10-B)
+    class: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Class",
       required: true,
-    },
+    }],
     subject: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "subject", // Matches model name in subjectModel.js

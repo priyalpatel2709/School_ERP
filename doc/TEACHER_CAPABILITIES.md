@@ -29,7 +29,7 @@ Use this to build the **Teacher Dashboard**.
         "title": "Algebra Chapter 5",
         "description": "Solve exercise 5.1",
         "subject": "subject_id_math", 
-        "class": "class_id_10A",
+        "class": ["class_id_10A", "class_id_10B"], // Assign to Multiple Classes!
         "dueDate": "2024-02-20",
         "status": "Published", 
         "assignedBy": "teacher_profile_id", 
@@ -45,7 +45,12 @@ Use this to build the **Teacher Dashboard**.
     *   List of cards: title, class, due date.
     *   Show status: `Draft` (Grey), `Published` (Green).
 
-### C. Grade Student Work
+### C. Track Submission Status
+*   **Action**: Teacher sees a breakdown of who in the class has submitted, is late, or is overdue.
+*   **API**: `GET /api/v1/homeWork/submission-status/:homeworkId`
+*   **Response**: Detailed list of students with their submission dates and attachments.
+
+### D. Grade Student Work
 *   **Action**: Teacher clicks on a specific Homework, sees a list of students, and grades one.
 *   **API**: `POST /api/v1/homeWork/grade`
 *   **Payload**:
