@@ -34,5 +34,6 @@ Teachers manage the daily educational flow and student performance.
 
 *   **For Frontend Developers building the Admin Panel**: Read [ADMIN_CAPABILITIES.md](./ADMIN_CAPABILITIES.md)
 *   **For Frontend Developers building the Teacher App**: Read [TEACHER_CAPABILITIES.md](./TEACHER_CAPABILITIES.md)
+*   **For Timetable Implementation Guide**: Read [TIMETABLE_FRONTEND_GUIDE.md](./TIMETABLE_FRONTEND_GUIDE.md)
 *   **For API Integration & Examples**: Read [CURL_EXAMPLES.md](./CURL_EXAMPLES.md) and [FRONTEND_API_GUIDE.md](./FRONTEND_API_GUIDE.md)
 *   **For Understanding RBAC**: Read [ROLES_ARCHITECTURE.md](./ROLES_ARCHITECTURE.md)

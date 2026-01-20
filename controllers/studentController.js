@@ -6,8 +6,11 @@ const {
 
   getClassModel,
   getTeacherModel,
+  getSubjectModel,
+  getTimeTableModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
+const { timeTablePopulateModel } = require("../utils/miscellaneousFunctions");
 const mongoose = require("mongoose");
 
 //create new Student
@@ -220,6 +223,62 @@ const createParentAccount = asyncHandler(async (req, res, next) => {
   }
 });
 
+const getTimeTableByStudentId = asyncHandler(async (req, res, next) => {
+  const Student = getStudentModel(req.schoolDb);
+  const TimeTable = getTimeTableModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
+  const Subject = getSubjectModel(req.schoolDb);
+  const Class = getClassModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+
+  try {
+    // 1. Find the student profile using the logged-in User's ID (req.user._id)
+    const student = await Student.findOne({ user: req.user._id }).populate("class");
+
+    if (!student) {
+      return next(createError(404, "Student profile not found for the logged-in user"));
+    }
+
+    // 2. Get the classes assigned to this student
+    const classIds = student.class.map((c) => c._id);
+
+    // 3. Find and populate time tables for those classes
+    let query = TimeTable.findOne({ class: classIds })
+      .populate({
+        path: "class",
+        model: Class,
+        select: "classNumber division academicYear",
+      });
+
+    // Manually apply the population for each day of the week since timeTablePopulateModel 
+    // returns an array intended for the crudOperations helper.
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    days.forEach(day => {
+      query = query.populate({
+        path: `week.${day}.subject`,
+        model: Subject,
+        select: "name code"
+      }).populate({
+        path: `week.${day}.teacher`,
+        model: Teacher,
+        select: "user",
+        populate: {
+          path: "user",
+          model: User,
+          select: "name"
+        }
+      });
+    });
+
+    const timeTable = await query;
+
+    res.status(200).json(timeTable);
+  } catch (error) {
+    console.error("Error fetching time table:", error);
+    next(error);
+  }
+});
+
 module.exports = {
   createStudent,
   getAllStudent,
@@ -229,5 +288,6 @@ module.exports = {
   getStudentById,
   createStudentWithUser,
   linkSibling,
-  createParentAccount
+  createParentAccount,
+  getTimeTableByStudentId,
 };

@@ -11,11 +11,13 @@ const {
   getStudentById,
   createStudentWithUser,
   linkSibling,
-  createParentAccount
+  createParentAccount,
+  getTimeTableByStudentId
 } = require("../controllers/studentController");
 
 router.post("/", identifyTenant, protect, createStudent);
 router.get("/", identifyTenant, protect, getAllStudent);
+router.get("/my-time-table", identifyTenant, protect, getTimeTableByStudentId);
 router.get("/:id", identifyTenant, protect, getStudentById);
 router.put("/:id", identifyTenant, protect, updateStudent);
 router.delete("/", identifyTenant, protect, deleteAllStudent);

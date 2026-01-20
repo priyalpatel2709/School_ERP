@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 
 const studentModel = mongoose.Schema(
   {
-    roleNumber: { type: Number, require: true },
+    roleNumber: { type: Number, required: true },
     class: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
     calendar: [{ type: mongoose.Schema.Types.ObjectId, ref: "Calendar" }], // todo create calendar
     studentImage: {

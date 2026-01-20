@@ -43,6 +43,15 @@ const daySchema = new mongoose.Schema(
 
 const timeTableSchema = new mongoose.Schema(
   {
+    class: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Class",
+      required: true,
+    },
+    academicYear: {
+      type: String,
+      required: true,
+    },
     week: {
       Monday: [daySchema],
       Tuesday: [daySchema],

@@ -285,28 +285,33 @@ const getTimeTableByTeacherId = asyncHandler(async (req, res, next) => {
         { "week.Saturday.teacher": teacherId },
         { "week.Sunday.teacher": teacherId },
       ],
-    }).populate({
-      path: "week",
-      populate: [
-        {
-          path: "Monday.subject Tuesday.subject Wednesday.subject Thursday.subject Friday.subject Saturday.subject Sunday.subject",
-          model: Subject,
-          select: "name code",
-        },
-      ],
-    });
+    })
+      .populate({
+        path: "class",
+        model: getClassModel(req.schoolDb),
+        select: "classNumber division academicYear",
+      })
+      .populate({
+        path: "week.Monday.subject week.Tuesday.subject week.Wednesday.subject week.Thursday.subject week.Friday.subject week.Saturday.subject week.Sunday.subject",
+        model: Subject,
+        select: "name code",
+      });
 
     // Collect all lectures for the given teacher ID
     const teacherLectures = [];
 
     timeTables.forEach((timeTable) => {
       for (const [day, lectures] of Object.entries(timeTable.week)) {
+        if (!Array.isArray(lectures)) continue; // Skip non-day properties if any
         lectures.forEach((lecture) => {
-          if (lecture.teacher && lecture.teacher._id.toString() === teacherId) {
+          if (
+            lecture.teacher &&
+            lecture.teacher.toString() === teacherId
+          ) {
             teacherLectures.push({
               day,
+              class: timeTable.class,
               subject: lecture.subject,
-              teacher: lecture.teacher,
               startTime: lecture.startTime,
               endTime: lecture.endTime,
               isBreak: lecture.isBreak,
