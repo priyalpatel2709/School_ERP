@@ -3,9 +3,15 @@ const getUserModel = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
 
 const protect = asyncHandler(async (req, res, next) => {
-  const token = req.headers.authorization?.split(" ")[1];
+  // Check for token in Authorization header first, then in cookies
+  let token = '';
+
+  if (req.cookies) {
+    token = req.cookies.token;
+  }
+
   if (!token) {
-    return res.status(401).json({ error: "Not authorized, no token provided" });
+    return res.status(401).json({ error: "Not authorized, No token provided" });
   }
 
   try {

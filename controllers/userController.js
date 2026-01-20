@@ -17,12 +17,30 @@ const authUser = asyncHandler(async (req, res) => {
     throw createError(401, "Invalid email or password");
   }
 
+  const token = generateToken(user._id);
+
+  // Set cookies for token and schoolID
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    sameSite: 'strict',
+    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+  };
+
+  // Strip 'school_' prefix from schoolID for cookie
+  const schoolIdForCookie = user.schoolID.startsWith('school_')
+    ? user.schoolID.substring(7) // Remove 'school_' (7 characters)
+    : user.schoolID;
+
+  res.cookie('token', token, cookieOptions);
+  res.cookie('X-School-Id', schoolIdForCookie, cookieOptions);
+
   // Return user info and generated token
   res.json({
     _id: user._id,
     name: user.name,
     email: user.email,
-    token: generateToken(user._id),
+    token: token,
     schoolID: user.schoolID,
     roleName: user.roleName,
   });
@@ -51,12 +69,32 @@ const registerUser = asyncHandler(async (req, res, next) => {
       ...user,
     });
 
+    const token = generateToken(newUser._id);
+
+    // Set cookies for token and schoolID
+    const cookieOptions = {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    };
+
+    // Strip 'school_' prefix from schoolID for cookie
+    const schoolIdForCookie = schoolID.startsWith('school_')
+      ? schoolID.substring(7)
+      : schoolID;
+
+    res.cookie('token', token, cookieOptions);
+    res.cookie('X-School-Id', schoolIdForCookie, cookieOptions);
+
     // Return user info and generated token
     res.status(201).json({
       _id: newUser._id,
       name: newUser.name,
       email: newUser.email,
-      token: generateToken(newUser._id),
+      token: token,
+      schoolID: schoolID,
+      roleName: newUser.roleName,
     });
   } catch (error) {
     console.log("File: userController.js", "Line 59:", error.message);
@@ -167,6 +205,13 @@ const getUsersBySchoolID = asyncHandler(async (req, res) => {
   res.status(200).json(populatedUsers);
 });
 
+// Logout user and clear cookies
+const logoutUser = asyncHandler(async (req, res) => {
+  res.clearCookie('token');
+  res.clearCookie('X-School-Id');
+  res.json({ message: "Logged out successfully" });
+});
+
 module.exports = {
   authUser,
   registerUser,
@@ -178,4 +223,5 @@ module.exports = {
   getAllUsers,
   assignRoleToUser,
   getUsersBySchoolID,
+  logoutUser,
 };

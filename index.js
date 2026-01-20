@@ -6,6 +6,7 @@ const morgan = require("morgan");
 const helmet = require("helmet");
 const hpp = require("hpp");
 const compression = require("compression");
+const cookieParser = require("cookie-parser");
 
 // Import middlewares
 const { requestLogger, errorLogger } = require("./helper/logger");
@@ -47,6 +48,7 @@ app.use(compression()); // Compress all responses
 app.use(express.json({ limit: '10kb' })); // Limit body size
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }));
+app.use(cookieParser()); // Parse cookies
 
 // Advanced Security
 app.use(hpp()); // Protect against HTTP Parameter Pollution attacks

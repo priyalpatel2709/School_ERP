@@ -10,6 +10,7 @@ const {
   updateById,
   assignRoleToUser,
   getUsersBySchoolID,
+  logoutUser,
 } = require("../controllers/userController");
 const identifyTenant = require("../middleware/IdentificationMiddleware");
 const { protect } = require("../middleware/authMiddleware");
@@ -17,6 +18,10 @@ const { protect } = require("../middleware/authMiddleware");
 // Route: POST /api/users/login
 // Description: Authenticate user and generate token
 router.post("/login", identifyTenant, authUser);
+
+// Route: POST /api/users/logout
+// Description: Logout user and clear cookies
+router.post("/logout", logoutUser);
 
 // Route: POST /api/users/
 // Description: Register a new user
