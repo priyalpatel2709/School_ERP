@@ -25,7 +25,12 @@ const {
   teacherRoutes,
   subjectRoutes,
   timeTableRoutes,
-  notificationRoutes
+  notificationRoutes,
+  feeRoutes,
+  attendanceRoutes,
+  leaveRoutes,
+  examinationRoutes,
+  gradingRoutes,
 } = require("./routes");
 
 // Import error handlers
@@ -79,6 +84,11 @@ app.use("/api/v1/teacher", teacherRoutes);
 app.use("/api/v1/subject", subjectRoutes);
 app.use("/api/v1/timeTable", timeTableRoutes);
 app.use("/api/v1/notification", notificationRoutes);
+app.use("/api/v1/fee", feeRoutes);
+app.use("/api/v1/attendance", attendanceRoutes);
+app.use("/api/v1/leave", leaveRoutes);
+app.use("/api/v1/examination", examinationRoutes);
+app.use("/api/v1/grading", gradingRoutes);
 
 // Error handling
 app.use(notFound);

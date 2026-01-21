@@ -30,4 +30,26 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 });
 
-module.exports = { protect };
+const authorize = (...requiredPermissions) => {
+  return asyncHandler(async (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: "Not authorized" });
+    }
+
+    // Admin/SuperAdmins typically have full access
+    if (req.user.roleName === "Admin" || req.user.roleName === "SuperAdmin") {
+      return next();
+    }
+
+    // Check if user has ANY of the required permissions in their access list
+    if (req.user.access && requiredPermissions.some(perm => req.user.access.includes(perm))) {
+      return next();
+    }
+
+    return res.status(403).json({
+      error: "Forbidden. You do not have permission to perform this action."
+    });
+  });
+};
+
+module.exports = { protect, authorize };

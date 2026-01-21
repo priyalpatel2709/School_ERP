@@ -9,6 +9,13 @@ const subjectRoutes = require("./subjectRoute");
 const timeTableRoutes = require("./timeTableRoute");
 const notificationRoutes = require("./notificationRoute");
 
+// Phase 2 Routes
+const feeRoutes = require("./feeRoute");
+const attendanceRoutes = require("./attendanceRoute");
+const leaveRoutes = require("./leaveRoute");
+const examinationRoutes = require("./examinationRoute");
+const gradingRoutes = require("./gradingRoute");
+
 module.exports = {
   userRouters,
   classRoutes,
@@ -20,4 +27,10 @@ module.exports = {
   subjectRoutes,
   timeTableRoutes,
   notificationRoutes,
+  // Phase 2
+  feeRoutes,
+  attendanceRoutes,
+  leaveRoutes,
+  examinationRoutes,
+  gradingRoutes,
 };

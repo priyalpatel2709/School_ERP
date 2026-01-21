@@ -9,6 +9,21 @@ const getSubjectModel = require("./subjectModel");
 const getTimeTableModel = require("./timeTableModel");
 const getNotificationModel = require("./notificationModel");
 
+// Phase 2: Fee Management Models
+const getFeeStructureModel = require("./feeStructureModel");
+const getFeeInvoiceModel = require("./feeInvoiceModel");
+const getFeePaymentModel = require("./feePaymentModel");
+
+// Phase 2: Attendance Models
+const getStudentAttendanceModel = require("./studentAttendanceModel");
+const getStaffAttendanceModel = require("./staffAttendanceModel");
+const getLeaveApplicationModel = require("./leaveApplicationModel");
+
+// Phase 2: Examination Models
+const getExaminationModel = require("./examinationModel");
+const getExamResultModel = require("./examResultModel");
+const getGradingSystemModel = require("./gradingSystemModel");
+
 module.exports = {
   getHomeworkModel,
   getClassModel,
@@ -20,4 +35,16 @@ module.exports = {
   getSubjectModel,
   getTimeTableModel,
   getNotificationModel,
+  // Phase 2: Fee Management
+  getFeeStructureModel,
+  getFeeInvoiceModel,
+  getFeePaymentModel,
+  // Phase 2: Attendance
+  getStudentAttendanceModel,
+  getStaffAttendanceModel,
+  getLeaveApplicationModel,
+  // Phase 2: Examination
+  getExaminationModel,
+  getExamResultModel,
+  getGradingSystemModel,
 };
