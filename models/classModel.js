@@ -3,8 +3,8 @@ const mongoose = require("mongoose");
 const classModel = new mongoose.Schema(
   {
     classNumber: { type: String, required: true }, // e.g., "10"
-    division: { type: String, required: true },    // e.g., "A"
-    academicYear: { type: String, required: true }, // e.g., "2023-2024"
+    division: { type: String, required: true }, // e.g., "A"
+    academicYear: { type: String }, // e.g., "2023-2024"
 
     classTeacher: {
       type: mongoose.Schema.Types.ObjectId,
@@ -25,11 +25,14 @@ const classModel = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Ensure unique class per academic year (e.g., 10-A-2024 must be unique)
-classModel.index({ classNumber: 1, division: 1, academicYear: 1 }, { unique: true });
+classModel.index(
+  { classNumber: 1, division: 1, academicYear: 1 },
+  { unique: true },
+);
 
 const getClassModel = (connection) => {
   return connection.model("Class", classModel);

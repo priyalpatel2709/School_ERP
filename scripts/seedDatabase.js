@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 
+// Phase 1 Models
 const getUserModel = require("../models/userModel");
 const getTeacherModel = require("../models/teacherModel");
 const getStudentModel = require("../models/studentModel");
@@ -8,7 +9,21 @@ const getSubjectModel = require("../models/subjectModel");
 const getSchoolDetailModel = require("../models/schoolDetailModel");
 const getTimeTableModel = require("../models/timeTableModel");
 
-const {connectToDatabase} = require("../config/db");
+// Phase 2 Models
+const getRoleModel = require("../models/roleModel");
+const getNotificationModel = require("../models/notificationModel");
+const getHomeworkModel = require("../models/homeWorkModel");
+const getFeeStructureModel = require("../models/feeStructureModel");
+const getFeeInvoiceModel = require("../models/feeInvoiceModel");
+const getFeePaymentModel = require("../models/feePaymentModel");
+const getExaminationModel = require("../models/examinationModel");
+const getExamResultModel = require("../models/examResultModel");
+const getGradingSystemModel = require("../models/gradingSystemModel");
+const getStudentAttendanceModel = require("../models/studentAttendanceModel");
+const getStaffAttendanceModel = require("../models/staffAttendanceModel");
+const getLeaveApplicationModel = require("../models/leaveApplicationModel");
+
+const { connectToDatabase } = require("../config/db");
 let userDB, schoolDB;
 
 const connectDB = async () => {
@@ -24,6 +39,7 @@ const connectDB = async () => {
 
 const seedDatabase = async () => {
   try {
+    // Initialize Phase 1 Models
     const User = getUserModel(userDB);
     const Teacher = getTeacherModel(schoolDB);
     const Student = getStudentModel(schoolDB);
@@ -31,6 +47,20 @@ const seedDatabase = async () => {
     const Subject = getSubjectModel(schoolDB);
     const SchoolDetail = getSchoolDetailModel(schoolDB);
     const TimeTable = getTimeTableModel(schoolDB);
+
+    // Initialize Phase 2 Models
+    const Role = getRoleModel(userDB);
+    const Notification = getNotificationModel(schoolDB);
+    const Homework = getHomeworkModel(schoolDB);
+    const FeeStructure = getFeeStructureModel(schoolDB);
+    const FeeInvoice = getFeeInvoiceModel(schoolDB);
+    const FeePayment = getFeePaymentModel(schoolDB);
+    const Examination = getExaminationModel(schoolDB);
+    const ExamResult = getExamResultModel(schoolDB);
+    const GradingSystem = getGradingSystemModel(schoolDB);
+    const StudentAttendance = getStudentAttendanceModel(schoolDB);
+    const StaffAttendance = getStaffAttendanceModel(schoolDB);
+    const LeaveApplication = getLeaveApplicationModel(schoolDB);
 
     // Create users with detailed fields
     const users = await User.create([
@@ -754,6 +784,7 @@ const seedDatabase = async () => {
         classNumber: "10",
         division: "A",
         classTeacher: teachers[0]._id,
+        academicYear: "2025-2026",
         students: [
           students[0]._id,
           students[1]._id,
@@ -774,6 +805,7 @@ const seedDatabase = async () => {
         classNumber: "10",
         division: "B",
         classTeacher: teachers[1]._id,
+        academicYear: "2025-2026",
         students: [
           students[0]._id,
           students[1]._id,
@@ -833,6 +865,8 @@ const seedDatabase = async () => {
     // create time table
     const timeTable = await TimeTable.create([
       {
+        class: classes[0]._id,
+        academicYear: "2025-2026",
         week: {
           Monday: [
             {
@@ -1232,7 +1266,994 @@ const seedDatabase = async () => {
       metaData: [{ key: "motto", value: "Knowledge is Power" }],
     });
 
-    console.log("Database seeded successfully");
+    console.log("✓ Phase 1 data seeded successfully");
+    console.log("Starting Phase 2 data seeding...");
+
+    // ========================================
+    // PHASE 2: ROLES
+    // ========================================
+    const roles = await Role.create([
+      {
+        roleName: "Admin",
+        access: [
+          "user:read",
+          "user:write",
+          "user:delete",
+          "class:read",
+          "class:write",
+          "teacher:read",
+          "teacher:write",
+          "student:read",
+          "student:write",
+          "fee:read",
+          "fee:write",
+          "exam:read",
+          "exam:write",
+          "attendance:read",
+          "attendance:write",
+          "notification:read",
+          "notification:write",
+        ],
+        metaData: [{ key: "description", value: "Full system access" }],
+      },
+      {
+        roleName: "Teacher",
+        access: [
+          "class:read",
+          "student:read",
+          "homework:read",
+          "homework:write",
+          "attendance:read",
+          "attendance:write",
+          "exam:read",
+          "notification:read",
+        ],
+        metaData: [{ key: "description", value: "Teacher access" }],
+      },
+      {
+        roleName: "Student",
+        access: [
+          "homework:read",
+          "attendance:read",
+          "exam:read",
+          "notification:read",
+          "fee:read",
+        ],
+        metaData: [{ key: "description", value: "Student access" }],
+      },
+      {
+        roleName: "Parent",
+        access: [
+          "student:read",
+          "homework:read",
+          "attendance:read",
+          "exam:read",
+          "notification:read",
+          "fee:read",
+          "fee:write",
+        ],
+        metaData: [{ key: "description", value: "Parent access" }],
+      },
+      {
+        roleName: "Accountant",
+        access: ["fee:read", "fee:write", "student:read", "user:read"],
+        metaData: [{ key: "description", value: "Finance access" }],
+      },
+    ]);
+
+    console.log("✓ Roles created");
+
+    // ========================================
+    // PHASE 2: GRADING SYSTEM
+    // ========================================
+    const gradingSystem = await GradingSystem.create({
+      systemName: "Standard Grading System",
+      academicYear: "2025-2026",
+      gradingScale: [
+        {
+          grade: "A+",
+          minPercentage: 90,
+          maxPercentage: 100,
+          gradePoint: 10,
+          description: "Outstanding",
+          isPassing: true,
+        },
+        {
+          grade: "A",
+          minPercentage: 80,
+          maxPercentage: 89,
+          gradePoint: 9,
+          description: "Excellent",
+          isPassing: true,
+        },
+        {
+          grade: "B+",
+          minPercentage: 70,
+          maxPercentage: 79,
+          gradePoint: 8,
+          description: "Very Good",
+          isPassing: true,
+        },
+        {
+          grade: "B",
+          minPercentage: 60,
+          maxPercentage: 69,
+          gradePoint: 7,
+          description: "Good",
+          isPassing: true,
+        },
+        {
+          grade: "C",
+          minPercentage: 50,
+          maxPercentage: 59,
+          gradePoint: 6,
+          description: "Average",
+          isPassing: true,
+        },
+        {
+          grade: "D",
+          minPercentage: 40,
+          maxPercentage: 49,
+          gradePoint: 5,
+          description: "Pass",
+          isPassing: true,
+        },
+        {
+          grade: "F",
+          minPercentage: 0,
+          maxPercentage: 39,
+          gradePoint: 0,
+          description: "Fail",
+          isPassing: false,
+        },
+      ],
+      defaultPassingPercentage: 40,
+      isActive: true,
+      metaData: [{ key: "system", value: "CBSE" }],
+    });
+
+    console.log("✓ Grading system created");
+
+    // ========================================
+    // PHASE 2: FEE STRUCTURES
+    // ========================================
+    const feeStructures = await FeeStructure.create([
+      {
+        class: classes[0]._id,
+        academicYear: "2025-2026",
+        feeHeads: [
+          {
+            headName: "Tuition Fee",
+            amount: 5000,
+            frequency: "Monthly",
+            isMandatory: true,
+            description: "Monthly tuition fee",
+          },
+          {
+            headName: "Lab Fee",
+            amount: 2000,
+            frequency: "Yearly",
+            isMandatory: true,
+            description: "Annual laboratory fee",
+          },
+          {
+            headName: "Library Fee",
+            amount: 1000,
+            frequency: "Yearly",
+            isMandatory: true,
+            description: "Annual library fee",
+          },
+          {
+            headName: "Sports Fee",
+            amount: 1500,
+            frequency: "Yearly",
+            isMandatory: false,
+            description: "Annual sports fee",
+          },
+          {
+            headName: "Transport Fee",
+            amount: 2000,
+            frequency: "Monthly",
+            isMandatory: false,
+            description: "Monthly transport fee",
+          },
+        ],
+        discounts: [
+          {
+            discountName: "Sibling Discount",
+            discountType: "Percentage",
+            discountValue: 10,
+            applicableFor: "Siblings",
+            description: "10% discount for siblings",
+          },
+          {
+            discountName: "Merit Scholarship",
+            discountType: "Percentage",
+            discountValue: 25,
+            applicableFor: "Merit",
+            description: "25% discount for merit students",
+          },
+        ],
+        lateFeeConfig: {
+          enabled: true,
+          gracePeriodDays: 5,
+          lateFeeType: "Fixed",
+          lateFeeValue: 100,
+        },
+        status: "Active",
+        effectiveFrom: new Date("2025-04-01"),
+        metaData: [{ key: "term", value: "Annual" }],
+      },
+      {
+        class: classes[1]._id,
+        academicYear: "2025-2026",
+        feeHeads: [
+          {
+            headName: "Tuition Fee",
+            amount: 4500,
+            frequency: "Monthly",
+            isMandatory: true,
+            description: "Monthly tuition fee",
+          },
+          {
+            headName: "Lab Fee",
+            amount: 1800,
+            frequency: "Yearly",
+            isMandatory: true,
+            description: "Annual laboratory fee",
+          },
+          {
+            headName: "Library Fee",
+            amount: 1000,
+            frequency: "Yearly",
+            isMandatory: true,
+            description: "Annual library fee",
+          },
+        ],
+        discounts: [
+          {
+            discountName: "Early Payment Discount",
+            discountType: "Percentage",
+            discountValue: 5,
+            applicableFor: "Early Payment",
+            description: "5% discount for early payment",
+          },
+        ],
+        lateFeeConfig: {
+          enabled: true,
+          gracePeriodDays: 5,
+          lateFeeType: "Fixed",
+          lateFeeValue: 100,
+        },
+        status: "Active",
+        effectiveFrom: new Date("2025-04-01"),
+        metaData: [{ key: "term", value: "Annual" }],
+      },
+    ]);
+
+    console.log("✓ Fee structures created");
+
+    // ========================================
+    // PHASE 2: FEE INVOICES
+    // ========================================
+    const feeInvoices = await FeeInvoice.create([
+      {
+        student: students[0]._id,
+        class: classes[0]._id,
+        academicYear: "2025-2026",
+        invoiceNumber: "INV-2025-001",
+        feeStructure: feeStructures[0]._id,
+        invoicePeriod: "Monthly",
+        periodMonth: 4,
+        issueDate: new Date("2025-04-01"),
+        dueDate: new Date("2025-04-10"),
+        feeItems: [
+          {
+            headName: "Tuition Fee",
+            amount: 5000,
+            frequency: "Monthly",
+            description: "Monthly tuition fee",
+          },
+          {
+            headName: "Lab Fee",
+            amount: 2000,
+            frequency: "Yearly",
+            description: "Annual laboratory fee",
+          },
+        ],
+        subtotal: 7000,
+        totalDiscount: 0,
+        lateFee: 0,
+        totalAmount: 7000,
+        paidAmount: 7000,
+        balanceAmount: 0,
+        status: "Paid",
+        paidDate: new Date("2025-04-05"),
+        metaData: [{ key: "term", value: "Q1" }],
+      },
+      {
+        student: students[1]._id,
+        class: classes[0]._id,
+        academicYear: "2025-2026",
+        invoiceNumber: "INV-2025-002",
+        feeStructure: feeStructures[0]._id,
+        invoicePeriod: "Monthly",
+        periodMonth: 4,
+        issueDate: new Date("2025-04-01"),
+        dueDate: new Date("2025-04-10"),
+        feeItems: [
+          {
+            headName: "Tuition Fee",
+            amount: 5000,
+            frequency: "Monthly",
+            description: "Monthly tuition fee",
+          },
+        ],
+        subtotal: 5000,
+        discounts: [
+          {
+            discountName: "Sibling Discount",
+            discountType: "Percentage",
+            discountValue: 10,
+            discountAmount: 500,
+            reason: "Second child in school",
+          },
+        ],
+        totalDiscount: 500,
+        lateFee: 0,
+        totalAmount: 4500,
+        paidAmount: 2000,
+        balanceAmount: 2500,
+        status: "Partially Paid",
+        metaData: [{ key: "term", value: "Q1" }],
+      },
+      {
+        student: students[2]._id,
+        class: classes[1]._id,
+        academicYear: "2025-2026",
+        invoiceNumber: "INV-2025-003",
+        feeStructure: feeStructures[1]._id,
+        invoicePeriod: "Monthly",
+        periodMonth: 4,
+        issueDate: new Date("2025-04-01"),
+        dueDate: new Date("2025-04-10"),
+        feeItems: [
+          {
+            headName: "Tuition Fee",
+            amount: 4500,
+            frequency: "Monthly",
+            description: "Monthly tuition fee",
+          },
+        ],
+        subtotal: 4500,
+        totalDiscount: 0,
+        lateFee: 0,
+        totalAmount: 4500,
+        paidAmount: 0,
+        balanceAmount: 4500,
+        status: "Issued",
+        metaData: [{ key: "term", value: "Q1" }],
+      },
+    ]);
+
+    console.log("✓ Fee invoices created");
+
+    // ========================================
+    // PHASE 2: FEE PAYMENTS
+    // ========================================
+    const feePayments = await FeePayment.create([
+      {
+        invoice: feeInvoices[0]._id,
+        student: students[0]._id,
+        receiptNumber: "RCP-2025-001",
+        paymentDate: new Date("2025-04-05"),
+        amount: 7000,
+        paymentMode: "Online Transfer",
+        transactionDetails: {
+          transactionId: "TXN123456789",
+          bankName: "HDFC Bank",
+        },
+        status: "Success",
+        collectedBy: users[0]._id,
+        remarks: "Payment via Razorpay gateway",
+        metaData: [{ key: "gateway", value: "Razorpay" }],
+      },
+      {
+        invoice: feeInvoices[1]._id,
+        student: students[1]._id,
+        receiptNumber: "RCP-2025-002",
+        paymentDate: new Date("2025-04-06"),
+        amount: 2000,
+        paymentMode: "Cash",
+        status: "Success",
+        collectedBy: users[0]._id,
+        remarks: "Partial payment received in cash",
+        metaData: [{ key: "note", value: "Partial payment" }],
+      },
+    ]);
+
+    console.log("✓ Fee payments created");
+
+    // ========================================
+    // PHASE 2: EXAMINATIONS
+    // ========================================
+    const examinations = await Examination.create([
+      {
+        examName: "Mid-Term Examination",
+        examType: "Term Exam",
+        academicYear: "2025-2026",
+        classes: [classes[0]._id, classes[1]._id],
+        startDate: new Date("2025-09-01"),
+        endDate: new Date("2025-09-15"),
+        subjects: [
+          {
+            subject: subjects[5]._id,
+            examDate: new Date("2025-09-01"),
+            startTime: "09:00 AM",
+            duration: 180,
+            maxMarks: 100,
+            passingMarks: 40,
+            weightage: 50,
+            syllabus: "Chapters 1-5",
+            instructions: "Bring calculator and graph paper",
+          },
+          {
+            subject: subjects[6]._id,
+            examDate: new Date("2025-09-03"),
+            startTime: "09:00 AM",
+            duration: 180,
+            maxMarks: 100,
+            passingMarks: 40,
+            weightage: 50,
+            syllabus: "Chapters 1-4",
+          },
+          {
+            subject: subjects[7]._id,
+            examDate: new Date("2025-09-05"),
+            startTime: "09:00 AM",
+            duration: 180,
+            maxMarks: 100,
+            passingMarks: 40,
+            weightage: 50,
+            syllabus: "Chapters 1-6",
+          },
+        ],
+        gradingSystem: gradingSystem._id,
+        status: "Scheduled",
+        markEntryStartDate: new Date("2025-09-16"),
+        markEntryEndDate: new Date("2025-09-25"),
+        markEntryStatus: "Not Started",
+        resultPublished: false,
+        generalInstructions:
+          "Students must arrive 30 minutes before exam time",
+        metaData: [{ key: "term", value: "1" }],
+      },
+      {
+        examName: "Final Examination",
+        examType: "Final Exam",
+        academicYear: "2025-2026",
+        classes: [classes[0]._id],
+        startDate: new Date("2026-03-01"),
+        endDate: new Date("2026-03-20"),
+        subjects: [
+          {
+            subject: subjects[5]._id,
+            examDate: new Date("2026-03-01"),
+            startTime: "09:00 AM",
+            duration: 180,
+            maxMarks: 100,
+            passingMarks: 40,
+            weightage: 100,
+          },
+        ],
+        gradingSystem: gradingSystem._id,
+        status: "Scheduled",
+        resultPublished: false,
+        metaData: [{ key: "term", value: "Final" }],
+      },
+    ]);
+
+    console.log("✓ Examinations created");
+
+    // ========================================
+    // PHASE 2: EXAM RESULTS
+    // ========================================
+    const examResults = await ExamResult.create([
+      {
+        student: students[0]._id,
+        examination: examinations[0]._id,
+        class: classes[0]._id,
+        academicYear: "2025-2026",
+        subjectResults: [
+          {
+            subject: subjects[5]._id,
+            marksObtained: 85,
+            maxMarks: 100,
+            percentage: 85,
+            grade: "A",
+            gradePoint: 9,
+            remarks: "Excellent performance",
+          },
+          {
+            subject: subjects[6]._id,
+            marksObtained: 78,
+            maxMarks: 100,
+            percentage: 78,
+            grade: "B+",
+            gradePoint: 8,
+            remarks: "Good work",
+          },
+          {
+            subject: subjects[7]._id,
+            marksObtained: 92,
+            maxMarks: 100,
+            percentage: 92,
+            grade: "A+",
+            gradePoint: 10,
+            remarks: "Outstanding",
+          },
+        ],
+        totalMarksObtained: 255,
+        totalMaxMarks: 300,
+        overallPercentage: 85,
+        overallGrade: "A",
+        overallGradePoint: 9,
+        rank: 1,
+        status: "Published",
+        publishedDate: new Date("2025-09-30"),
+        metaData: [{ key: "term", value: "Mid-Term" }],
+      },
+      {
+        student: students[1]._id,
+        examination: examinations[0]._id,
+        class: classes[0]._id,
+        academicYear: "2025-2026",
+        subjectResults: [
+          {
+            subject: subjects[5]._id,
+            marksObtained: 72,
+            maxMarks: 100,
+            percentage: 72,
+            grade: "B+",
+            gradePoint: 8,
+          },
+          {
+            subject: subjects[6]._id,
+            marksObtained: 68,
+            maxMarks: 100,
+            percentage: 68,
+            grade: "B",
+            gradePoint: 7,
+          },
+          {
+            subject: subjects[7]._id,
+            marksObtained: 75,
+            maxMarks: 100,
+            percentage: 75,
+            grade: "B+",
+            gradePoint: 8,
+          },
+        ],
+        totalMarksObtained: 215,
+        totalMaxMarks: 300,
+        overallPercentage: 71.67,
+        overallGrade: "B+",
+        overallGradePoint: 8,
+        rank: 2,
+        status: "Published",
+        publishedDate: new Date("2025-09-30"),
+        metaData: [{ key: "term", value: "Mid-Term" }],
+      },
+    ]);
+
+    console.log("✓ Exam results created");
+
+    // ========================================
+    // PHASE 2: HOMEWORK
+    // ========================================
+    const homework = await Homework.create([
+      {
+        title: "Physics Chapter 1 - Motion",
+        description:
+          "Solve all numerical problems from Chapter 1. Show all working steps.",
+        dueDate: new Date("2026-02-01"),
+        status: "Published",
+        class: [classes[0]._id],
+        subject: subjects[5]._id,
+        assignedBy: teachers[0]._id,
+        attachments: ["https://example.com/physics-ch1.pdf"],
+        submissions: [
+          {
+            student: students[0]._id,
+            submittedAt: new Date("2026-01-30"),
+            attachments: ["https://example.com/student1-submission.pdf"],
+            grade: "A",
+            feedback: "Excellent work! All problems solved correctly.",
+            isLate: false,
+          },
+          {
+            student: students[1]._id,
+            submittedAt: new Date("2026-02-02"),
+            attachments: ["https://example.com/student2-submission.pdf"],
+            grade: "B",
+            feedback: "Good attempt, but some calculation errors.",
+            isLate: true,
+          },
+        ],
+        metaData: [{ key: "difficulty", value: "Medium" }],
+      },
+      {
+        title: "Chemistry Lab Report",
+        description:
+          "Write a detailed lab report on the titration experiment conducted in class.",
+        dueDate: new Date("2026-02-10"),
+        status: "Published",
+        class: [classes[0]._id, classes[1]._id],
+        subject: subjects[6]._id,
+        assignedBy: teachers[1]._id,
+        attachments: ["https://example.com/lab-report-template.pdf"],
+        submissions: [],
+        metaData: [{ key: "type", value: "Lab Report" }],
+      },
+      {
+        title: "Biology Diagram Assignment",
+        description: "Draw and label the human digestive system.",
+        dueDate: new Date("2026-02-05"),
+        status: "Draft",
+        class: [classes[1]._id],
+        subject: subjects[7]._id,
+        assignedBy: teachers[2]._id,
+        attachments: [],
+        submissions: [],
+        metaData: [{ key: "difficulty", value: "Easy" }],
+      },
+    ]);
+
+    console.log("✓ Homework created");
+
+    // ========================================
+    // PHASE 2: STUDENT ATTENDANCE
+    // ========================================
+    const studentAttendance = await StudentAttendance.create([
+      {
+        student: students[0]._id,
+        class: classes[0]._id,
+        date: new Date("2026-01-20"),
+        academicYear: "2025-2026",
+        attendanceMode: "Daily",
+        dailyStatus: {
+          morning: {
+            status: "Present",
+            markedAt: new Date("2026-01-20T09:00:00"),
+            markedBy: users[0]._id,
+          },
+          evening: {
+            status: "Present",
+            markedAt: new Date("2026-01-20T15:00:00"),
+            markedBy: users[0]._id,
+          },
+        },
+        overallStatus: "Present",
+        parentNotified: false,
+        metaData: [{ key: "note", value: "Regular attendance" }],
+      },
+      {
+        student: students[1]._id,
+        class: classes[0]._id,
+        date: new Date("2026-01-20"),
+        academicYear: "2025-2026",
+        attendanceMode: "Daily",
+        dailyStatus: {
+          morning: {
+            status: "Absent",
+            markedAt: new Date("2026-01-20T09:00:00"),
+            markedBy: users[0]._id,
+          },
+          evening: {
+            status: "Absent",
+            markedAt: new Date("2026-01-20T15:00:00"),
+            markedBy: users[0]._id,
+          },
+        },
+        overallStatus: "Absent",
+        leaveInfo: {
+          isOnLeave: false,
+        },
+        parentNotified: true,
+        notifiedAt: new Date("2026-01-20T16:00:00"),
+        remarks: "Absent without prior notice",
+        metaData: [{ key: "alert", value: "true" }],
+      },
+      {
+        student: students[2]._id,
+        class: classes[1]._id,
+        date: new Date("2026-01-20"),
+        academicYear: "2025-2026",
+        attendanceMode: "Subject-Wise",
+        subjectAttendance: [
+          {
+            subject: subjects[0]._id,
+            period: 1,
+            status: "Present",
+            markedAt: new Date("2026-01-20T09:00:00"),
+            markedBy: users[1]._id,
+          },
+          {
+            subject: subjects[1]._id,
+            period: 2,
+            status: "Present",
+            markedAt: new Date("2026-01-20T10:00:00"),
+            markedBy: users[1]._id,
+          },
+          {
+            subject: subjects[2]._id,
+            period: 3,
+            status: "Absent",
+            markedAt: new Date("2026-01-20T11:00:00"),
+            markedBy: users[2]._id,
+          },
+        ],
+        overallStatus: "Partial",
+        parentNotified: true,
+        notifiedAt: new Date("2026-01-20T16:00:00"),
+        metaData: [{ key: "mode", value: "subject-wise" }],
+      },
+    ]);
+
+    console.log("✓ Student attendance created");
+
+    // ========================================
+    // PHASE 2: STAFF ATTENDANCE
+    // ========================================
+    const staffAttendance = await StaffAttendance.create([
+      {
+        staff: users[0]._id,
+        date: new Date("2026-01-20"),
+        academicYear: "2025-2026",
+        checkIn: {
+          time: new Date("2026-01-20T08:45:00"),
+          method: "Biometric",
+        },
+        checkOut: {
+          time: new Date("2026-01-20T17:00:00"),
+          method: "Biometric",
+        },
+        totalHours: 8.25,
+        status: "Present",
+        isLate: false,
+        metaData: [{ key: "note", value: "On time" }],
+      },
+      {
+        staff: users[1]._id,
+        date: new Date("2026-01-20"),
+        academicYear: "2025-2026",
+        checkIn: {
+          time: new Date("2026-01-20T09:30:00"),
+          method: "Biometric",
+        },
+        checkOut: {
+          time: new Date("2026-01-20T17:00:00"),
+          method: "Biometric",
+        },
+        totalHours: 7.5,
+        status: "Late",
+        isLate: true,
+        lateByMinutes: 45,
+        remarks: "Traffic delay",
+        metaData: [{ key: "lateBy", value: "45 minutes" }],
+      },
+      {
+        staff: users[2]._id,
+        date: new Date("2026-01-20"),
+        academicYear: "2025-2026",
+        status: "On Leave",
+        leaveInfo: {
+          isOnLeave: true,
+          leaveType: "Sick Leave",
+        },
+        metaData: [{ key: "approved", value: "true" }],
+      },
+    ]);
+
+    console.log("✓ Staff attendance created");
+
+    // ========================================
+    // PHASE 2: LEAVE APPLICATIONS
+    // ========================================
+    const leaveApplications = await LeaveApplication.create([
+      {
+        applicantType: "Student",
+        student: students[0]._id,
+        leaveType: "Sick Leave",
+        fromDate: new Date("2026-01-25"),
+        toDate: new Date("2026-01-27"),
+        totalDays: 3,
+        reason: "Suffering from viral fever",
+        attachments: [
+          {
+            fileName: "medical-certificate.pdf",
+            fileUrl: "https://example.com/medical-cert.pdf",
+            fileType: "application/pdf",
+          },
+        ],
+        status: "Approved",
+        appliedBy: users[5]._id,
+        appliedAt: new Date("2026-01-24"),
+        reviewedBy: users[0]._id,
+        reviewedAt: new Date("2026-01-24T14:00:00"),
+        reviewComments: "Approved. Get well soon.",
+        notificationSent: true,
+        metaData: [{ key: "parentApplied", value: "true" }],
+      },
+      {
+        applicantType: "Student",
+        student: students[1]._id,
+        leaveType: "Casual Leave",
+        fromDate: new Date("2026-02-01"),
+        toDate: new Date("2026-02-01"),
+        totalDays: 1,
+        reason: "Family function",
+        status: "Pending",
+        appliedBy: users[6]._id,
+        appliedAt: new Date("2026-01-30"),
+        notificationSent: false,
+        metaData: [{ key: "urgent", value: "false" }],
+      },
+      {
+        applicantType: "Staff",
+        staff: users[2]._id,
+        leaveType: "Sick Leave",
+        fromDate: new Date("2026-01-20"),
+        toDate: new Date("2026-01-22"),
+        totalDays: 3,
+        reason: "Medical checkup and rest",
+        attachments: [
+          {
+            fileName: "doctor-note.pdf",
+            fileUrl: "https://example.com/doctor-note.pdf",
+            fileType: "application/pdf",
+          },
+        ],
+        status: "Approved",
+        appliedBy: users[2]._id,
+        appliedAt: new Date("2026-01-19"),
+        reviewedBy: users[0]._id,
+        reviewedAt: new Date("2026-01-19T16:00:00"),
+        reviewComments: "Approved",
+        notificationSent: true,
+        metaData: [{ key: "type", value: "medical" }],
+      },
+      {
+        applicantType: "Staff",
+        staff: users[3]._id,
+        leaveType: "Casual Leave",
+        fromDate: new Date("2026-02-10"),
+        toDate: new Date("2026-02-12"),
+        totalDays: 3,
+        reason: "Personal work",
+        status: "Rejected",
+        appliedBy: users[3]._id,
+        appliedAt: new Date("2026-02-05"),
+        reviewedBy: users[0]._id,
+        reviewedAt: new Date("2026-02-06"),
+        reviewComments: "Cannot approve due to staff shortage during exams",
+        notificationSent: true,
+        metaData: [{ key: "examPeriod", value: "true" }],
+      },
+    ]);
+
+    console.log("✓ Leave applications created");
+
+    // ========================================
+    // PHASE 2: NOTIFICATIONS
+    // ========================================
+    const notifications = await Notification.create([
+      {
+        type: "info",
+        recipients: [
+          {
+            user: users[5]._id,
+            status: "unread",
+            time: new Date(),
+          },
+          {
+            user: users[6]._id,
+            status: "read",
+            time: new Date(),
+          },
+        ],
+        message: "Mid-term examinations will begin from September 1st, 2025.",
+        expireDate: new Date("2025-09-01"),
+        metaData: [{ key: "category", value: "Exam" }],
+      },
+      {
+        type: "warning",
+        recipients: [
+          {
+            user: users[6]._id,
+            status: "unread",
+            time: new Date(),
+          },
+        ],
+        message:
+          "Your child was absent today. Please contact the school if this is unexpected.",
+        metaData: [{ key: "category", value: "Attendance" }],
+      },
+      {
+        type: "success",
+        recipients: [
+          {
+            user: users[5]._id,
+            status: "read",
+            time: new Date(),
+          },
+        ],
+        message: "Fee payment of Rs. 7000 received successfully.",
+        metaData: [{ key: "category", value: "Fee" }],
+      },
+      {
+        type: "info",
+        recipients: [
+          {
+            user: users[0]._id,
+            status: "unread",
+            time: new Date(),
+          },
+          {
+            user: users[1]._id,
+            status: "unread",
+            time: new Date(),
+          },
+          {
+            user: users[2]._id,
+            status: "unread",
+            time: new Date(),
+          },
+        ],
+        message: "Staff meeting scheduled for tomorrow at 10:00 AM.",
+        expireDate: new Date("2026-01-22"),
+        metaData: [{ key: "category", value: "Meeting" }],
+      },
+      {
+        type: "error",
+        recipients: [
+          {
+            user: users[5]._id,
+            status: "unread",
+            time: new Date(),
+          },
+        ],
+        message:
+          "Fee payment overdue. Please clear the dues to avoid late fees.",
+        metaData: [{ key: "category", value: "Fee" }],
+      },
+    ]);
+
+    console.log("✓ Notifications created");
+
+    console.log("\n========================================");
+    console.log("✓ Database seeded successfully!");
+    console.log("========================================");
+    console.log(`✓ Users: ${users.length}`);
+    console.log(`✓ Teachers: ${teachers.length}`);
+    console.log(`✓ Students: ${students.length}`);
+    console.log(`✓ Classes: ${classes.length}`);
+    console.log(`✓ Subjects: ${subjects.length}`);
+    console.log(`✓ Timetables: 1`);
+    console.log(`✓ School Details: 1`);
+    console.log(`✓ Roles: ${roles.length}`);
+    console.log(`✓ Grading Systems: 1`);
+    console.log(`✓ Fee Structures: ${feeStructures.length}`);
+    console.log(`✓ Fee Invoices: ${feeInvoices.length}`);
+    console.log(`✓ Fee Payments: ${feePayments.length}`);
+    console.log(`✓ Examinations: ${examinations.length}`);
+    console.log(`✓ Exam Results: ${examResults.length}`);
+    console.log(`✓ Homework: ${homework.length}`);
+    console.log(`✓ Student Attendance: ${studentAttendance.length}`);
+    console.log(`✓ Staff Attendance: ${staffAttendance.length}`);
+    console.log(`✓ Leave Applications: ${leaveApplications.length}`);
+    console.log(`✓ Notifications: ${notifications.length}`);
+    console.log("========================================\n");
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {
@@ -1245,11 +2266,11 @@ const seedDatabase = async () => {
 const dropDatabases = async () => {
   try {
     if (userDB) {
-      await userDB.connection.db.dropDatabase();
+      await userDB.dropDatabase();
       console.log("Dropped Users database");
     }
     if (schoolDB) {
-      await schoolDB.connection.db.dropDatabase();
+      await schoolDB.dropDatabase();
       console.log("Dropped ABC database");
     }
   } catch (error) {

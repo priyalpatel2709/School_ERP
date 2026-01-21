@@ -13,24 +13,24 @@ const teacherModel = mongoose.Schema(
         degree: { type: String, required: true }, // e.g., "B.Ed", "M.Sc"
         university: { type: String, required: true },
         yearOfPassing: { type: Number, required: true },
-        grade: { type: String } // e.g. "A+", "First Class"
-      }
+        grade: { type: String }, // e.g. "A+", "First Class"
+      },
     ],
 
     // Phase 2: Employment Details
     employment: {
-      dateOfJoining: { type: Date, required: true },
+      dateOfJoining: { type: Date },
       jobType: {
         type: String,
         enum: ["Permanent", "Contract", "Visiting"],
-        default: "Permanent"
+        default: "Permanent",
       },
       status: {
         type: String,
         enum: ["Active", "Resigned", "Suspended"],
-        default: "Active"
+        default: "Active",
       },
-      resignationDate: { type: Date }
+      resignationDate: { type: Date },
     },
 
     leaves: {
@@ -48,7 +48,7 @@ const teacherModel = mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const getTeacherModel = (connection) => {
