@@ -9,10 +9,19 @@ const {
   updateById,
   sendNotification,
   cleanupExpiredNotifications,
+  getMyNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
 } = require("../controllers/notificationController");
 const identifyTenant = require("../middleware/IdentificationMiddleware");
 const { protect } = require("../middleware/authMiddleware");
 
+// User-facing routes (for logged-in users to manage their notifications)
+router.get("/my-notifications", identifyTenant, protect, getMyNotifications);
+router.put("/mark-read/:notificationId", identifyTenant, protect, markNotificationAsRead);
+router.put("/mark-all-read", identifyTenant, protect, markAllNotificationsAsRead);
+
+// Admin routes
 router.post("/", identifyTenant, protect, createNotification);
 router.get("/", identifyTenant, protect, getAllNotification);
 router.get("/:id", identifyTenant, protect, getNotificationById);

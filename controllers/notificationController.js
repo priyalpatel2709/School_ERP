@@ -90,7 +90,17 @@ const updateById = asyncHandler(async (req, res, next) => {
 });
 
 const sendNotification = asyncHandler(async (req, res) => {
-  const { message, recipients, expireDate, classes, type } = req.body;
+  const {
+    message,
+    targetType, // 'all', 'role', 'class', 'specific'
+    targetRoles, // ['Teacher', 'Student', 'Parent'] - for role-based
+    targetClasses, // [classId1, classId2] - for class-based
+    targetUserIds, // [userId1, userId2] - for specific users
+    includeParents, // boolean - include parents of students
+    expireDate,
+    type
+  } = req.body;
+
   const { schoolDb, usersDb, user } = req;
 
   const Notification = getNotificationModel(schoolDb);
@@ -98,6 +108,11 @@ const sendNotification = asyncHandler(async (req, res) => {
   const Student = getStudentModel(schoolDb);
   const Class = getClassModel(schoolDb);
   const User = getUserModel(usersDb);
+
+  // Validate required fields
+  if (!message || !type) {
+    return res.status(400).json({ message: "Message and type are required" });
+  }
 
   // Create and save the notification
   const notification = new Notification({
@@ -109,120 +124,149 @@ const sendNotification = asyncHandler(async (req, res) => {
 
   await notification.save();
 
-  // Batch size for efficient updates
-  const batchSize = 1000;
+  // Collect all target user IDs
+  const targetUserIdsSet = new Set();
 
-  const updateUsersInBatches = async (userIds) => {
-    let batch = [];
-    for (const userId of userIds) {
-      batch.push(userId);
-
-      if (batch.length === batchSize) {
-        // Update the users' notification field in batches
-        await User.updateMany(
-          { _id: { $in: batch } },
-          { $push: { notifications: notification._id } }
-        );
-        batch = [];
-      }
-    }
-
-    // Update any remaining users
-    if (batch.length > 0) {
-      await User.updateMany(
-        { _id: { $in: batch } },
-        { $push: { notifications: notification._id } }
-      );
-    }
-  };
-
-  const getUsersForClasses = async () => {
-    if (!classes || classes.length === 0) return [];
-
-    // Create filters to match the requested classes
-    const classFilters = classes.map(({ classNumber, division }) => ({
-      classNumber,
-      division,
-    }));
-
-    // Find the matching classes and populate the user references for students and classTeacher
-    const classesFound = await Class.find({ $or: classFilters })
-      .populate({
-        path: "students",
-        select: "user",
-      })
-      .populate({
-        path: "classTeacher",
-        select: "user",
-      })
-
-      .select("students classTeacher")
-      .exec();
-
-    // Use a Set to avoid duplicates
-    const userIds = new Set();
-    classesFound.forEach((cls) => {
-      console.log("File: notificationController.js", "Line 174:", cls);
-      if (cls.classTeacher && cls.classTeacher.user) {
-        userIds.add(cls.classTeacher.user._id.toString());
-      }
-      cls.students.forEach((student) => {
-        if (student.user) {
-          userIds.add(student.user._id.toString());
-        }
-      });
+  // Helper function to add user IDs to the set
+  const addUserIds = (userIds) => {
+    userIds.forEach(id => {
+      if (id) targetUserIdsSet.add(id.toString());
     });
-
-    // Convert the Set to an Array
-    return Array.from(userIds);
   };
 
-  // List of update promises
-  const updatePromises = [];
-
-  // Send notifications to the classes' students and class teachers
-  if (recipients.includes("classes")) {
-    const classUserIds = await getUsersForClasses();
-    updatePromises.push(updateUsersInBatches(classUserIds));
+  // 1. Handle 'all' target type - send to everyone
+  if (targetType === 'all') {
+    const allUsers = await User.find({}).select('_id');
+    addUserIds(allUsers.map(u => u._id));
   }
 
-  // Send notifications to all teachers
-  if (recipients.includes("teachers")) {
-    const teacherCursor = Teacher.find().populate("user", "_id").cursor();
-    const teacherUserIds = [];
-    for (
-      let doc = await teacherCursor.next();
-      doc != null;
-      doc = await teacherCursor.next()
-    ) {
-      if (doc.user) {
-        teacherUserIds.push(doc.user._id);
+  // 2. Handle 'role' target type - send to specific roles
+  else if (targetType === 'role' && targetRoles && targetRoles.length > 0) {
+    for (const role of targetRoles) {
+      if (role === 'Teacher') {
+        const teachers = await Teacher.find({}).select('user');
+        addUserIds(teachers.map(t => t.user).filter(Boolean));
+      }
+      else if (role === 'Student') {
+        const students = await Student.find({}).select('user guardianInfo');
+        addUserIds(students.map(s => s.user).filter(Boolean));
+
+        // Include parents if requested
+        if (includeParents) {
+          students.forEach(student => {
+            if (student.guardianInfo) {
+              student.guardianInfo.forEach(guardian => {
+                if (guardian.user) {
+                  targetUserIdsSet.add(guardian.user.toString());
+                }
+              });
+            }
+          });
+        }
+      }
+      else if (role === 'Parent') {
+        // Get all parents from student guardian info
+        const students = await Student.find({}).select('guardianInfo');
+        students.forEach(student => {
+          student.guardianInfo.forEach(guardian => {
+            if (guardian.user) {
+              targetUserIdsSet.add(guardian.user.toString());
+            }
+          });
+        });
+      }
+      else {
+        // For other roles, find users directly by roleName
+        const users = await User.find({ roleName: role }).select('_id');
+        addUserIds(users.map(u => u._id));
       }
     }
-    updatePromises.push(updateUsersInBatches(teacherUserIds));
   }
 
-  // Send notifications to all students
-  if (recipients.includes("students")) {
-    const studentCursor = Student.find().populate("user", "_id").cursor();
-    const studentUserIds = [];
-    for (
-      let doc = await studentCursor.next();
-      doc != null;
-      doc = await studentCursor.next()
-    ) {
-      if (doc.user) {
-        studentUserIds.push(doc.user._id);
+  // 3. Handle 'class' target type - send to specific classes
+  else if (targetType === 'class' && targetClasses && targetClasses.length > 0) {
+    const classes = await Class.find({ _id: { $in: targetClasses } })
+      .select('students classTeacher subjects');
+
+    for (const cls of classes) {
+      // Add class teacher - need to fetch the teacher document to get user ID
+      if (cls.classTeacher) {
+        const classTeacher = await Teacher.findById(cls.classTeacher).select('user');
+        if (classTeacher?.user) {
+          targetUserIdsSet.add(classTeacher.user.toString());
+        }
+      }
+
+      // Add students - need to fetch student documents to get user IDs
+      if (cls.students && cls.students.length > 0) {
+        const students = await Student.find({
+          _id: { $in: cls.students }
+        }).select('user guardianInfo');
+
+        students.forEach(student => {
+          if (student.user) {
+            targetUserIdsSet.add(student.user.toString());
+          }
+
+          // Add parents if requested
+          if (includeParents && student.guardianInfo) {
+            student.guardianInfo.forEach(guardian => {
+              if (guardian.user) {
+                targetUserIdsSet.add(guardian.user.toString());
+              }
+            });
+          }
+        });
+      }
+
+      // Add subject teachers if available
+      if (cls.subjects && cls.subjects.length > 0) {
+        const subjectIds = cls.subjects.map(s => s._id || s);
+        const subjectTeachers = await Teacher.find({
+          subjects: { $in: subjectIds }
+        }).select('user');
+
+        addUserIds(subjectTeachers.map(t => t.user).filter(Boolean));
       }
     }
-    updatePromises.push(updateUsersInBatches(studentUserIds));
   }
 
-  // Wait for all updates to complete
-  await Promise.all(updatePromises);
+  // 4. Handle 'specific' target type - send to specific users
+  else if (targetType === 'specific' && targetUserIds && targetUserIds.length > 0) {
+    addUserIds(targetUserIds);
+  }
+
+  // Convert Set to Array
+  const finalUserIds = Array.from(targetUserIdsSet);
+
+  if (finalUserIds.length === 0) {
+    return res.status(400).json({
+      message: "No valid recipients found for the notification"
+    });
+  }
+
+  // Batch update users with notification
+  const batchSize = 1000;
+  for (let i = 0; i < finalUserIds.length; i += batchSize) {
+    const batch = finalUserIds.slice(i, i + batchSize);
+    await User.updateMany(
+      { _id: { $in: batch } },
+      { $push: { notifications: notification._id } }
+    );
+  }
+
+  // Update notification with recipients
+  notification.recipients = finalUserIds.map(userId => ({
+    user: userId,
+    status: 'unread',
+    time: new Date()
+  }));
+  await notification.save();
 
   res.status(200).json({
-    message: "Notifications sent and added to user records successfully",
+    message: "Notification sent successfully",
+    recipientCount: finalUserIds.length,
+    notificationId: notification._id
   });
 });
 
@@ -264,19 +308,114 @@ const cleanupExpiredNotifications = asyncHandler(async (req, res) => {
   });
 });
 
-const getNotificationForUser = asyncHandler(async (req, res) => {
-  const { schoolDb, usersDb } = req;
+// Get notifications for the logged-in user
+const getMyNotifications = asyncHandler(async (req, res) => {
+  const { schoolDb, user } = req;
   const Notification = getNotificationModel(schoolDb);
-  const User = getUserModel(usersDb);
-  const { userId } = req.params;
-  const user = await User.findById(userId);
-  if (!user) {
-    return res.status(404).json({ message: "User not found" });
+
+  try {
+    // Find notifications where the user is in the recipients array
+    const notifications = await Notification.find({
+      'recipients.user': user._id,
+      expireDate: { $gte: new Date() } // Only non-expired
+    })
+      .select('type message createdAt expireDate recipients.$')
+      .sort({ createdAt: -1 }); // Most recent first
+
+    // Extract the user's specific recipient info (read/unread status)
+    const notificationsWithStatus = notifications.map(notif => {
+      const recipient = notif.recipients.find(
+        r => r.user.toString() === user._id.toString()
+      );
+
+      return {
+        _id: notif._id,
+        type: notif.type,
+        message: notif.message,
+        createdAt: notif.createdAt,
+        expireDate: notif.expireDate,
+        status: recipient?.status || 'unread',
+        readAt: recipient?.time
+      };
+    });
+
+    res.status(200).json({
+      notifications: notificationsWithStatus,
+      unreadCount: notificationsWithStatus.filter(n => n.status === 'unread').length
+    });
+  } catch (error) {
+    console.error('Error fetching notifications:', error);
+    res.status(500).json({ message: 'Error fetching notifications', error: error.message });
   }
-  const notifications = await Notification.find({
-    recipients: { $in: [userId] },
-  });
-  res.status(200).json({ notifications });
+});
+
+// Mark notification as read for the logged-in user
+const markNotificationAsRead = asyncHandler(async (req, res) => {
+  const { schoolDb, user } = req;
+  const { notificationId } = req.params;
+  const Notification = getNotificationModel(schoolDb);
+
+  try {
+    const notification = await Notification.findById(notificationId);
+
+    if (!notification) {
+      return res.status(404).json({ message: 'Notification not found' });
+    }
+
+    // Find and update the recipient's status
+    const recipientIndex = notification.recipients.findIndex(
+      r => r.user.toString() === user._id.toString()
+    );
+
+    if (recipientIndex === -1) {
+      return res.status(403).json({ message: 'Notification not addressed to you' });
+    }
+
+    notification.recipients[recipientIndex].status = 'read';
+    notification.recipients[recipientIndex].time = new Date();
+
+    await notification.save();
+
+    res.status(200).json({
+      message: 'Notification marked as read',
+      notificationId: notification._id
+    });
+  } catch (error) {
+    console.error('Error marking notification as read:', error);
+    res.status(500).json({ message: 'Error updating notification', error: error.message });
+  }
+});
+
+// Mark all notifications as read for the logged-in user
+const markAllNotificationsAsRead = asyncHandler(async (req, res) => {
+  const { schoolDb, user } = req;
+  const Notification = getNotificationModel(schoolDb);
+
+  try {
+    const result = await Notification.updateMany(
+      {
+        'recipients.user': user._id,
+        'recipients.status': 'unread'
+      },
+      {
+        $set: {
+          'recipients.$[elem].status': 'read',
+          'recipients.$[elem].time': new Date()
+        }
+      },
+      {
+        arrayFilters: [{ 'elem.user': user._id, 'elem.status': 'unread' }]
+      }
+    );
+
+    res.status(200).json({
+      message: 'All notifications marked as read',
+      modifiedCount: result.modifiedCount
+    });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ message: 'Error updating notifications', error: error.message });
+  }
 });
 
 // const scheduleNotificationCleanup = (cron, cleanupFunction) => {
@@ -300,4 +439,7 @@ module.exports = {
   updateById,
   sendNotification,
   cleanupExpiredNotifications,
+  getMyNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
 };
