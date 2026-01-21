@@ -14,7 +14,7 @@ const userModel = new mongoose.Schema(
     religion: { type: String },
     userImage: { type: String },
     email: { type: String, unique: true, required: true },
-    loginID: { type: String, unique: true },
+    loginID: { type: String,  },
     password: { type: String },
     role: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
     deviceToken: { type: String, default: "" },

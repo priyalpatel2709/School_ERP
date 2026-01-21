@@ -2,9 +2,7 @@ const { connectToDatabase } = require("../config/db");
 
 const identifyTenant = async (req, res, next) => {
   let schoolId =
-    req.body.schoolId ||
-    req.header("X-School-Id") ||
-    req.query.schoolId;
+    req.body.schoolId || req.header("X-School-Id") || req.query.schoolId;
 
   // Check cookie as last resort and add 'school_' prefix if needed
   if (!schoolId && req.cookies && req.cookies["X-School-Id"]) {
@@ -13,7 +11,7 @@ const identifyTenant = async (req, res, next) => {
   }
 
   // Default to "Users" database if no schoolId is provided and base URL is "/user"
-  console.log("schoolId ", schoolId, !schoolId, req.baseUrl);
+
   if (!schoolId && req.baseUrl === "/api/v1/user") {
     schoolId = "Users";
   }
