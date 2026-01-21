@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const generateToken = require("../config/generateToken");
 const crudOperations = require("../utils/crudOperations");
 const { getUserModel, getNotificationModel } = require("../models");
+const createError = require("http-errors");
 const { populate } = require("dotenv");
 
 // Authenticate user and generate token
