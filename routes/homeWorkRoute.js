@@ -17,7 +17,7 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 //curt oration
-router.get("/byTeacher", identifyTenant, protect, getHomeWorkByTeacherId);
+// router.get("/byTeacher", identifyTenant, protect, getHomeWorkByTeacherId);
 router.post("/", identifyTenant, protect, createHomeWork);
 router.get("/", identifyTenant, protect, getAllHomeWork);
 router.get("/:id", identifyTenant, protect, getHomeWorkById);

@@ -161,8 +161,6 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
     // Extract user data and other teacher-related data from the request body
     const { user, ...teacherData } = req.body;
 
-
-
     // Create the new user with the teacher role
     const newUser = new User({
       ...user,
@@ -185,7 +183,7 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
     next(
       createError(500, "Error creating teacher with user", {
         error: err.message,
-      })
+      }),
     );
   }
 });
@@ -201,7 +199,7 @@ const assignSubjects = asyncHandler(async (req, res, next) => {
 
     if (teacher.employment.status !== "Active") {
       return next(
-        createError(400, "Cannot assign subjects to inactive teacher")
+        createError(400, "Cannot assign subjects to inactive teacher"),
       );
     }
 
@@ -218,12 +216,10 @@ const assignSubjects = asyncHandler(async (req, res, next) => {
     teacher.subjects = Array.from(uniqueIds);
     await teacher.save();
 
-    res
-      .status(200)
-      .json({
-        message: "Subjects assigned successfully",
-        subjects: teacher.subjects,
-      });
+    res.status(200).json({
+      message: "Subjects assigned successfully",
+      subjects: teacher.subjects,
+    });
   } catch (err) {
     next(createError(500, err.message));
   }
@@ -303,10 +299,7 @@ const getTimeTableByTeacherId = asyncHandler(async (req, res, next) => {
       for (const [day, lectures] of Object.entries(timeTable.week)) {
         if (!Array.isArray(lectures)) continue; // Skip non-day properties if any
         lectures.forEach((lecture) => {
-          if (
-            lecture.teacher &&
-            lecture.teacher.toString() === teacherId
-          ) {
+          if (lecture.teacher && lecture.teacher.toString() === teacherId) {
             teacherLectures.push({
               day,
               class: timeTable.class,
@@ -382,4 +375,5 @@ module.exports = {
   searchTeacher,
   getTimeTableByTeacherId,
   assignSubjects,
+  getTeacherByUserId,
 };

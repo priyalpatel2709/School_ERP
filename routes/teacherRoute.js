@@ -12,7 +12,8 @@ const {
   createTeacherWithUser,
   searchTeacher,
   getTimeTableByTeacherId,
-  assignSubjects
+  assignSubjects,
+  getTeacherByUserId,
 } = require("../controllers/teacherController");
 
 router.post("/", identifyTenant, protect, createTeacher);
@@ -24,7 +25,7 @@ router.get(
   "/getTimeTableByTeacherId/:teacherId",
   identifyTenant,
   protect,
-  getTimeTableByTeacherId
+  getTimeTableByTeacherId,
 );
 router.put("/:id", identifyTenant, protect, updateTeacherById);
 router.delete("/", identifyTenant, protect, deleteAllTeacher);
@@ -33,7 +34,7 @@ router.post(
   "/createTeacherWithUser",
   identifyTenant,
   protect,
-  createTeacherWithUser
+  createTeacherWithUser,
 );
 
 router.get("/byUser/:id", identifyTenant, protect, getTeacherByUserId);
