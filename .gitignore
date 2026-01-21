@@ -1,0 +1,10 @@
+/node_modules
+node_modules/
+
+.env.dovloper
+.env
+./logs
+*.log
+/error.log
+
+logs
