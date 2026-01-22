@@ -122,7 +122,7 @@ const feePaymentSchema = mongoose.Schema(
 // Indexes
 feePaymentSchema.index({ student: 1, paymentDate: -1 });
 feePaymentSchema.index({ invoice: 1 });
-feePaymentSchema.index({ receiptNumber: 1 });
+// feePaymentSchema.index({ receiptNumber: 1 });
 feePaymentSchema.index({ paymentDate: 1, status: 1 });
 
 const getFeePaymentModel = (connection) => {

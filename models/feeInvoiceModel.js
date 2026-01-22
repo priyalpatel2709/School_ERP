@@ -125,7 +125,7 @@ const feeInvoiceSchema = mongoose.Schema(
 // Indexes for efficient queries
 feeInvoiceSchema.index({ student: 1, academicYear: 1 });
 feeInvoiceSchema.index({ status: 1, dueDate: 1 });
-feeInvoiceSchema.index({ invoiceNumber: 1 });
+// feeInvoiceSchema.index({ invoiceNumber: 1 });
 
 // Calculate balance before saving
 feeInvoiceSchema.pre("save", function (next) {
