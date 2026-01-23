@@ -222,6 +222,204 @@ const deleteFeePayment = asyncHandler(async (req, res, next) => {
     feePaymentOperations.deleteById(req, res, next);
 });
 
+// --- Additional Use Cases ---
+
+// Bulk generate monthly invoices for classes
+const generateBulkInvoices = asyncHandler(async (req, res, next) => {
+    const { classIds, month, year, academicYear } = req.body;
+
+    const FeeStructure = getFeeStructureModel(req.schoolDb);
+    const FeeInvoice = getFeeInvoiceModel(req.schoolDb);
+    const Student = getStudentModel(req.schoolDb);
+
+    const invoices = [];
+
+    for (const classId of classIds) {
+        // Get active fee structure for class
+        const feeStructure = await FeeStructure.findOne({
+            class: classId,
+            status: 'Active',
+            academicYear
+        });
+
+        if (!feeStructure) {
+            continue; // Skip if no fee structure
+        }
+
+        // Get all students in class
+        const students = await Student.find({ class: classId });
+
+        for (const student of students) {
+            // Calculate fee items for the period
+            const feeItems = feeStructure.feeHeads
+                .filter(head => head.frequency === 'Monthly' || head.frequency === 'Quarterly')
+                .map(head => ({
+                    headName: head.headName,
+                    amount: head.amount,
+                    frequency: head.frequency
+                }));
+
+            const subtotal = feeItems.reduce((sum, item) => sum + item.amount, 0);
+
+            // Apply discounts if needed (sibling, merit, etc.)
+            const discounts = [];
+            const totalDiscount = discounts.reduce((sum, d) => sum + d.discountAmount, 0);
+            const totalAmount = subtotal - totalDiscount;
+
+            // Generate invoice number
+            const invoiceCount = await FeeInvoice.countDocuments({
+                invoiceNumber: new RegExp(`^INV-${year}`)
+            });
+            const invoiceNumber = `INV-${year}-${String(invoiceCount + invoices.length + 1).padStart(4, '0')}`;
+
+            const invoice = new FeeInvoice({
+                invoiceNumber,
+                student: student._id,
+                class: classId,
+                academicYear,
+                feeStructure: feeStructure._id,
+                invoicePeriod: 'Monthly',
+                periodMonth: month,
+                feeItems,
+                subtotal,
+                discounts,
+                totalDiscount,
+                totalAmount,
+                balanceAmount: totalAmount,
+                issueDate: new Date(),
+                dueDate: new Date(year, month - 1, 10), // 10th of month
+                status: 'Issued',
+                createdBy: req.user._id
+            });
+
+            await invoice.save();
+            invoices.push(invoice);
+        }
+    }
+
+    res.status(201).json({
+        success: true,
+        message: `${invoices.length} invoices generated successfully`,
+        data: invoices
+    });
+});
+
+// Get overdue invoices (Defaulters list)
+const getOverdueInvoices = asyncHandler(async (req, res, next) => {
+    const FeeInvoice = getFeeInvoiceModel(req.schoolDb);
+    const Student = getStudentModel(req.schoolDb);
+    const User = getUserModel(req.usersDb);
+    const Class = getClassModel(req.schoolDb);
+
+    const overdueInvoices = await FeeInvoice.find({
+        status: { $in: ['Issued', 'Overdue', 'Partially Paid'] },
+        balanceAmount: { $gt: 0 },
+        dueDate: { $lt: new Date() }
+    })
+        .populate({
+            field: 'student',
+            model: Student,
+            select: 'user admissionNumber roleNumber',
+            populate: { path: 'user', model: User, select: 'name email phone' }
+        })
+        .populate('class', 'classNumber division')
+        .sort({ dueDate: 1 });
+
+    res.status(200).json({
+        success: true,
+        count: overdueInvoices.length,
+        data: overdueInvoices
+    });
+});
+
+// Get invoices for a specific student
+const getStudentInvoices = asyncHandler(async (req, res, next) => {
+    const FeeInvoice = getFeeInvoiceModel(req.schoolDb);
+    const { studentId } = req.params;
+
+    const invoices = await FeeInvoice.find({ student: studentId })
+        .populate('feeStructure')
+        .populate('payments')
+        .sort({ issueDate: -1 });
+
+    res.status(200).json({
+        success: true,
+        count: invoices.length,
+        data: invoices
+    });
+});
+
+// Get payment history for a student
+const getStudentPaymentHistory = asyncHandler(async (req, res, next) => {
+    const FeePayment = getFeePaymentModel(req.schoolDb);
+    const { studentId } = req.params;
+    const User = getUserModel(req.usersDb);
+    const FeeInvoice = getFeeInvoiceModel(req.schoolDb);
+
+    const payments = await FeePayment.find({ student: studentId })
+        .populate('invoice', 'invoiceNumber issueDate')
+        .populate('collectedBy', 'name')
+        .sort({ paymentDate: -1 });
+
+    res.status(200).json({
+        success: true,
+        count: payments.length,
+        data: payments
+    });
+});
+
+// Get fee structure by class
+const getFeeStructureByClass = asyncHandler(async (req, res, next) => {
+    const FeeStructure = getFeeStructureModel(req.schoolDb);
+    const { classId } = req.params;
+    const { academicYear } = req.query;
+
+    const feeStructure = await FeeStructure.findOne({
+        class: classId,
+        academicYear,
+        status: 'Active'
+    }).populate('class', 'classNumber division');
+
+    if (!feeStructure) {
+        return next(createError(404, 'Fee structure not found for this class'));
+    }
+
+    res.status(200).json({
+        success: true,
+        data: feeStructure
+    });
+});
+
+// Daily collection report
+const getDailyCollectionReport = asyncHandler(async (req, res, next) => {
+    const FeePayment = getFeePaymentModel(req.schoolDb);
+    const { date } = req.query;
+    const User = getUserModel(req.usersDb);
+
+    const startDate = new Date(date);
+    startDate.setHours(0, 0, 0, 0);
+    const endDate = new Date(date);
+    endDate.setHours(23, 59, 59, 999);
+
+    const payments = await FeePayment.find({
+        paymentDate: { $gte: startDate, $lte: endDate },
+        status: 'Success'
+    })
+        .populate('student')
+        .populate('invoice', 'invoiceNumber')
+        .populate('collectedBy', 'name');
+
+    const totalCollection = payments.reduce((sum, payment) => sum + payment.amount, 0);
+
+    res.status(200).json({
+        success: true,
+        date,
+        totalCollection,
+        count: payments.length,
+        data: payments
+    });
+});
+
 module.exports = {
     // Structure
     createFeeStructure,
@@ -229,16 +427,22 @@ module.exports = {
     getFeeStructureById,
     updateFeeStructure,
     deleteFeeStructure,
+    getFeeStructureByClass,
     // Invoice
     createFeeInvoice,
     getAllFeeInvoices,
     getFeeInvoiceById,
     updateFeeInvoice,
     deleteFeeInvoice,
+    generateBulkInvoices,
+    getOverdueInvoices,
+    getStudentInvoices,
     // Payment
     createFeePayment,
     getAllFeePayments,
     getFeePaymentById,
     updateFeePayment,
     deleteFeePayment,
+    getStudentPaymentHistory,
+    getDailyCollectionReport,
 };
