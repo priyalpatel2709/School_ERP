@@ -8,6 +8,7 @@ const {
   getUserModel,
   getSubjectModel,
   getLeaveApplicationModel,
+  getTeacherModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 
@@ -24,7 +25,7 @@ const createStudentAttendance = asyncHandler(async (req, res, next) => {
       {
         field: "student",
         model: Student,
-        select: "user roleNumber admissionNumber",
+        select: "user rollNumber admissionNumber",
       },
       { field: "class", model: Class, select: "classNumber division" },
     ],
@@ -44,7 +45,7 @@ const getAllStudentAttendance = asyncHandler(async (req, res, next) => {
       {
         field: "student",
         model: Student,
-        select: "user roleNumber admissionNumber",
+        select: "user rollNumber admissionNumber",
         populateModels: [{ field: "user", model: User, select: "name" }],
       },
       { field: "class", model: Class, select: "classNumber division" },
@@ -67,7 +68,7 @@ const getStudentAttendanceById = asyncHandler(async (req, res, next) => {
       {
         field: "student",
         model: Student,
-        select: "user roleNumber admissionNumber",
+        select: "user rollNumber admissionNumber",
         populateModels: [{ field: "user", model: User, select: "name" }],
       },
       { field: "class", model: Class, select: "classNumber division" },
@@ -254,7 +255,7 @@ const getClassAttendanceByDate = asyncHandler(async (req, res, next) => {
   }).populate({
     path: "student",
     model: Student,
-    select: "user roleNumber admissionNumber",
+    select: "user rollNumber admissionNumber",
     populate: { path: "user", model: User, select: "name" },
   });
 
@@ -267,15 +268,25 @@ const getClassAttendanceByDate = asyncHandler(async (req, res, next) => {
 
 // Staff check-in
 const staffCheckIn = asyncHandler(async (req, res, next) => {
-  const { staffId, location, method } = req.body;
+  const { staff: staffInput, location, method, status } = req.body;
   const date = new Date();
   date.setHours(0, 0, 0, 0);
 
   const StaffAttendance = getStaffAttendanceModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
+
+  let staffUserId = staffInput;
+
+  // Check if the provided ID is a Teacher ID (by checking if a Teacher exists with this ID)
+  const teacherProfile = await Teacher.findById(staffInput);
+
+  if (teacherProfile) {
+    staffUserId = teacherProfile.user.toString();
+  }
 
   // Check if already checked in today
   const existing = await StaffAttendance.findOne({
-    staff: staffId,
+    staff: staffUserId,
     date,
   });
 
@@ -286,10 +297,14 @@ const staffCheckIn = asyncHandler(async (req, res, next) => {
   const attendance =
     existing ||
     new StaffAttendance({
-      staff: staffId,
+      staff: staffUserId,
       date,
       academicYear: req.body.academicYear,
     });
+
+  if (status) {
+    attendance.status = status;
+  }
 
   attendance.checkIn = {
     time: new Date(),
@@ -309,14 +324,24 @@ const staffCheckIn = asyncHandler(async (req, res, next) => {
 
 // Staff check-out
 const staffCheckOut = asyncHandler(async (req, res, next) => {
-  const { staffId, location, method } = req.body;
+  const { staff: staffInput, location, method, status } = req.body;
   const date = new Date();
   date.setHours(0, 0, 0, 0);
 
   const StaffAttendance = getStaffAttendanceModel(req.schoolDb);
+  const Teacher = getTeacherModel(req.schoolDb);
+
+  let staffUserId = staffInput;
+
+  // Find teacher profile to get the underlying user ID
+  const teacherProfile = await Teacher.findById(staffInput);
+
+  if (teacherProfile) {
+    staffUserId = teacherProfile.user.toString();
+  }
 
   const attendance = await StaffAttendance.findOne({
-    staff: staffId,
+    staff: staffUserId,
     date,
   });
 
@@ -326,6 +351,10 @@ const staffCheckOut = asyncHandler(async (req, res, next) => {
 
   if (attendance.checkOut.time) {
     return next(createError(400, "Already checked out for today"));
+  }
+
+  if (status) {
+    attendance.status = status;
   }
 
   attendance.checkOut = {
@@ -470,11 +499,12 @@ const getAllStaffMonthlyReport = asyncHandler(async (req, res, next) => {
     avgAttendancePercentage:
       staffReports.length > 0
         ? (
-          staffReports.reduce(
-            (sum, report) => sum + parseFloat(report.summary.attendancePercentage),
-            0,
-          ) / staffReports.length
-        ).toFixed(2)
+            staffReports.reduce(
+              (sum, report) =>
+                sum + parseFloat(report.summary.attendancePercentage),
+              0,
+            ) / staffReports.length
+          ).toFixed(2)
         : "0.00",
     totalLateMinutes: staffReports.reduce(
       (sum, report) => sum + report.summary.totalLateMinutes,

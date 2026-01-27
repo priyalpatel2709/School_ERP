@@ -50,7 +50,7 @@ const getAllClass = asyncHandler(async (req, res, next) => {
       {
         field: "students",
         model: Student,
-        select: "user roleNumber guardianInfo metaData",
+        select: "user rollNumber guardianInfo metaData",
         populateFields: [
           {
             field: "user",

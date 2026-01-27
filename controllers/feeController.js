@@ -92,7 +92,7 @@ const getAllFeeInvoices = asyncHandler(async (req, res, next) => {
             {
                 field: "student",
                 model: Student,
-                select: "user admissionNumber roleNumber",
+                select: "user admissionNumber rollNumber",
                 populateModels: [{ field: "user", model: User, select: "name" }]
             },
             { field: "class", model: Class, select: "classNumber division" },
@@ -115,7 +115,7 @@ const getFeeInvoiceById = asyncHandler(async (req, res, next) => {
             {
                 field: "student",
                 model: Student,
-                select: "user admissionNumber roleNumber",
+                select: "user admissionNumber rollNumber",
                 populateModels: [{ field: "user", model: User, select: "name" }]
             },
             { field: "class", model: Class, select: "classNumber division" },
@@ -319,7 +319,7 @@ const getOverdueInvoices = asyncHandler(async (req, res, next) => {
         .populate({
             field: 'student',
             model: Student,
-            select: 'user admissionNumber roleNumber',
+            select: 'user admissionNumber rollNumber',
             populate: { path: 'user', model: User, select: 'name email phone' }
         })
         .populate('class', 'classNumber division')

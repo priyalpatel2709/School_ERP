@@ -44,7 +44,7 @@ const getAllTeacher = asyncHandler(async (req, res, next) => {
           {
             field: "students",
             model: Student,
-            select: "roleNumber user",
+            select: "rollNumber user",
             populateFields: [
               {
                 field: "user",
@@ -93,7 +93,7 @@ const getTeacherById = asyncHandler(async (req, res, next) => {
           {
             field: "students",
             model: Student,
-            select: "roleNumber user",
+            select: "rollNumber user",
             populateFields: [
               {
                 field: "user",

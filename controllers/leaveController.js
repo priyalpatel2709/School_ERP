@@ -26,7 +26,7 @@ const getAllLeaveApplications = asyncHandler(async (req, res, next) => {
             {
                 field: "student",
                 model: Student,
-                select: "user roleNumber admissionNumber",
+                select: "user rollNumber admissionNumber",
                 populateModels: [{ field: "user", model: User, select: "name" }]
             },
             { field: "staff", model: User, select: "name roleName email" },
@@ -48,7 +48,7 @@ const getLeaveApplicationById = asyncHandler(async (req, res, next) => {
             {
                 field: "student",
                 model: Student,
-                select: "user roleNumber admissionNumber",
+                select: "user rollNumber admissionNumber",
                 populateModels: [{ field: "user", model: User, select: "name" }]
             },
             { field: "staff", model: User, select: "name roleName email" },
@@ -151,7 +151,7 @@ const getPendingLeaveApplications = asyncHandler(async (req, res, next) => {
         .populate({
             path: 'student',
             model: Student,
-            select: 'user roleNumber admissionNumber',
+            select: 'user rollNumber admissionNumber',
             populate: { path: 'user', model: User, select: 'name' }
         })
         .populate('staff', 'name email roleName')

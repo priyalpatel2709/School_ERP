@@ -62,7 +62,7 @@ const getAllHomeWork = asyncHandler(async (req, res, next) => {
       {
         field: "submissions.student",
         model: Student,
-        select: "roleNumber",
+        select: "rollNumber",
         populateFields: [
           {
             field: "user",
@@ -372,7 +372,7 @@ const getHomeworkSubmissionStatus = asyncHandler(async (req, res, next) => {
       return {
         studentId: std._id,
         name: std.user?.name,
-        rollNumber: std.roleNumber, // Check spelling in model
+        rollNumber: std.rollNumber, // Check spelling in model
         status: status,
         submissionDate: sub?.submittedAt,
         attachments: sub?.attachments || [],

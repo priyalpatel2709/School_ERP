@@ -513,7 +513,7 @@ const seedDatabase = async () => {
     // Create students
     const students = await Student.create([
       {
-        roleNumber: 1,
+        rollNumber: 1,
         user: users[5]._id,
         academicYear: "2024-07-10T00:00:00.000Z",
         admissionDate: "2024-07-10T00:00:00.000Z",
@@ -555,7 +555,7 @@ const seedDatabase = async () => {
         ],
       },
       {
-        roleNumber: 2,
+        rollNumber: 2,
         user: users[6]._id,
         academicYear: "2024-07-10T00:00:00.000Z",
         admissionDate: "2024-07-10T00:00:00.000Z",
@@ -597,7 +597,7 @@ const seedDatabase = async () => {
         ],
       },
       {
-        roleNumber: 3,
+        rollNumber: 3,
         user: users[7]._id,
         academicYear: "2024-07-10T00:00:00.000Z",
         admissionDate: "2024-07-10T00:00:00.000Z",
@@ -639,7 +639,7 @@ const seedDatabase = async () => {
         ],
       },
       {
-        roleNumber: 4,
+        rollNumber: 4,
         user: users[8]._id,
         academicYear: "2024-07-10T00:00:00.000Z",
         admissionDate: "2024-07-10T00:00:00.000Z",
@@ -681,7 +681,7 @@ const seedDatabase = async () => {
         ],
       },
       {
-        roleNumber: 5,
+        rollNumber: 5,
         user: users[9]._id,
         academicYear: "2024-07-10T00:00:00.000Z",
         admissionDate: "2024-07-10T00:00:00.000Z",

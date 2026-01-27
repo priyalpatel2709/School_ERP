@@ -579,7 +579,7 @@ const getMyChildren = asyncHandler(async (req, res, next) => {
         _id: student._id,
         studentInfo: {
           user: student.user,
-          roleNumber: student.roleNumber,
+          rollNumber: student.rollNumber,
           admissionNumber: student.admissionNumber,
           admissionDate: student.admissionDate,
           academicYear: student.academicYear,

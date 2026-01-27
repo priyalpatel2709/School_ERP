@@ -97,7 +97,7 @@ const createExamResult = asyncHandler(async (req, res, next) => {
             {
                 field: "student",
                 model: Student,
-                select: "user roleNumber admissionNumber",
+                select: "user rollNumber admissionNumber",
                 populateModels: [{ field: "user", model: User, select: "name" }]
             },
             { field: "class", model: Class, select: "classNumber division" },
@@ -122,7 +122,7 @@ const getAllExamResults = asyncHandler(async (req, res, next) => {
             {
                 field: "student",
                 model: Student,
-                select: "user roleNumber admissionNumber",
+                select: "user rollNumber admissionNumber",
                 populateModels: [{ field: "user", model: User, select: "name" }]
             },
             { field: "class", model: Class, select: "classNumber division" },
@@ -146,7 +146,7 @@ const getExamResultById = asyncHandler(async (req, res, next) => {
             {
                 field: "student",
                 model: Student,
-                select: "user roleNumber admissionNumber",
+                select: "user rollNumber admissionNumber",
                 populateModels: [{ field: "user", model: User, select: "name" }]
             },
             { field: "class", model: Class, select: "classNumber division" },
@@ -336,7 +336,7 @@ const getExamResultsByClass = asyncHandler(async (req, res, next) => {
         .populate({
             path: 'student',
             model: Student,
-            select: 'user roleNumber admissionNumber',
+            select: 'user rollNumber admissionNumber',
             populate: { path: 'user', model: User, select: 'name' }
         })
         .sort({ classRank: 1 });
