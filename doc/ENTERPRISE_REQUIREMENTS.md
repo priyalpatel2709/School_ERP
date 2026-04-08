@@ -101,3 +101,53 @@ SMS remains a **stub** (logged) until you plug a provider.
 | `*` | `/substitution`, `/admissions`, `/payroll/runs/...`, `/transport/...`, `/communication/...`, `/library/...` |
 
 Static files: `/uploads/**` from project `uploads/` directory.
+
+
+## 🟠 Phase 4: Technical & Non-Functional (In Progress)
+- [x] **Security**: Helmet, Rate Limiting, HPP (Implemented).
+- [x] **Logging**: File-based rotation logging (Implemented).
+- [ ] **Caching**: Implement Redis for frequently accessed data (Timetable, Fee Structure).
+- [ ] **Backup**: Automated daily DB backups.
+- [ ] **Tenancy**: Ensure strict data isolation between schools (if SaaS).
+
+---
+
+## 🟣 Phase 5: Sales Enablers (The "Closer" Features)
+*These are not "daily use" features, but you cannot sign a new school up without them.*
+
+### 1. Simple Onboarding (Bulk Import) 📥
+**Requirement**: Schools have thousands of existing students. They will **not** enter them manually.
+- **Feature**: Excel/CSV Upload for:
+  - Students & Parents.
+  - Staff details.
+  - Previous Fee Balances.
+- **Why it matters**: Without this, the school Admin will refuse to switch to your software.
+
+### 2. Executive Dashboards 📊
+**Requirement**: The Principal/Owner needs to see the "Health" of the school in 5 seconds.
+- **Feature**:
+  - **Fee Stats**: Today's Collection vs Expected. Total Outstanding.
+  - **Attendance**: Today's Absenteeism (Staff & Student).
+  - **Admission Funnel**: New Enquiries vs Conversions.
+- **Why it matters**: This is the screen that sells the product to the Decision Maker.
+
+---
+
+## 🔮 Phase 6: Long-Term Vision (Enterprise Differentiation)
+*Capabilities that large multi-branch school networks require.*
+
+### 1. Mobile App Support 📱
+- **Parent App API**: Endpoints for push notifications, homework view, fee payment.
+- **Teacher App API**: Quick attendance marking from phone.
+
+### 2. Multi-Branch Support 🏢
+- **Central Admin**: One Super-Admin controlling 5 different schools.
+- **Inter-branch Transfer**: Moving a student from "Branch A" to "Branch B" without re-entry.
+
+### 3. Inventory & Asset Management 📦
+- Track Desks, Computers, Lab Equipment.
+- Stock alerts (e.g., Chalk, Paper).
+
+### 4. Alumni Management 👨‍🎓
+- Database of passed-out students.
+- Event planning and donation tracking.
