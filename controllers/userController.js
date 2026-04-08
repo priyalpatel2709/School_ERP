@@ -3,7 +3,7 @@ const generateToken = require("../config/generateToken");
 const crudOperations = require("../utils/crudOperations");
 const { getUserModel, getNotificationModel } = require("../models");
 const createError = require("http-errors");
-const { populate } = require("dotenv");
+const { publicUrlFromDiskFilename } = require("../middleware/profileImageUpload");
 
 // Authenticate user and generate token
 const authUser = asyncHandler(async (req, res) => {
@@ -212,6 +212,30 @@ const logoutUser = asyncHandler(async (req, res) => {
   res.json({ message: "Logged out successfully" });
 });
 
+const uploadProfileImage = asyncHandler(async (req, res, next) => {
+  if (!req.file) {
+    return next(createError(400, 'No image uploaded. Use form field "image".'));
+  }
+  const User = getUserModel(req.usersDb);
+  const userId = req.uploadTargetUserId || req.user._id;
+  const url = publicUrlFromDiskFilename(req.file.filename);
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { userImage: url },
+    { new: true }
+  ).select("-password");
+
+  if (!user) {
+    return next(createError(404, "User not found"));
+  }
+
+  res.status(200).json({
+    success: true,
+    userImage: url,
+    user,
+  });
+});
+
 module.exports = {
   authUser,
   registerUser,
@@ -219,9 +243,9 @@ module.exports = {
   updateById,
   deleteAllId,
   deleteById,
-  getById,
   getAllUsers,
   assignRoleToUser,
   getUsersBySchoolID,
   logoutUser,
+  uploadProfileImage,
 };

@@ -8,6 +8,7 @@ function ensureUploadsDirs() {
     path.join(UPLOAD_ROOT, "receipts"),
     path.join(UPLOAD_ROOT, "report-cards"),
     path.join(UPLOAD_ROOT, "payslips"),
+    path.join(UPLOAD_ROOT, "users"),
   ];
   for (const d of dirs) {
     if (!fs.existsSync(d)) {
