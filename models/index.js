@@ -24,6 +24,14 @@ const getExaminationModel = require("./examinationModel");
 const getExamResultModel = require("./examResultModel");
 const getGradingSystemModel = require("./gradingSystemModel");
 
+const getSubstitutionModel = require("./substitutionModel");
+const getAdmissionApplicationModel = require("./admissionApplicationModel");
+const getPayrollRunModel = require("./payrollRunModel");
+const getTransportRouteModel = require("./transportRouteModel");
+const getTransportVehicleModel = require("./transportVehicleModel");
+const getLibraryItemModel = require("./libraryItemModel");
+const getLibraryBorrowingModel = require("./libraryBorrowingModel");
+
 module.exports = {
   getHomeworkModel,
   getClassModel,
@@ -47,4 +55,11 @@ module.exports = {
   getExaminationModel,
   getExamResultModel,
   getGradingSystemModel,
+  getSubstitutionModel,
+  getAdmissionApplicationModel,
+  getPayrollRunModel,
+  getTransportRouteModel,
+  getTransportVehicleModel,
+  getLibraryItemModel,
+  getLibraryBorrowingModel,
 };

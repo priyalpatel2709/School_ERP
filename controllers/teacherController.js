@@ -209,6 +209,20 @@ const assignSubjects = asyncHandler(async (req, res, next) => {
       return next(createError(400, "One or more subjects invalid"));
     }
 
+    if (teacher.qualifiedSubjects && teacher.qualifiedSubjects.length > 0) {
+      const allowed = new Set(teacher.qualifiedSubjects.map((x) => String(x)));
+      const invalid = subjectIds.filter((id) => !allowed.has(String(id)));
+      if (invalid.length) {
+        return next(
+          createError(
+            400,
+            "Cannot assign subjects outside the teacher's qualified subject list",
+            { invalidSubjectIds: invalid },
+          ),
+        );
+      }
+    }
+
     // Add without duplicates
     const uniqueIds = new Set(teacher.subjects.map((s) => s.toString()));
     subjectIds.forEach((id) => uniqueIds.add(id));
@@ -218,6 +232,35 @@ const assignSubjects = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({
       message: "Subjects assigned successfully",
+      subjects: teacher.subjects,
+    });
+  } catch (err) {
+    next(createError(500, err.message));
+  }
+});
+
+const setQualifiedSubjects = asyncHandler(async (req, res, next) => {
+  const Teacher = getTeacherModel(req.schoolDb);
+  const Subject = getSubjectModel(req.schoolDb);
+  const { teacherId, subjectIds } = req.body;
+
+  try {
+    const teacher = await Teacher.findById(teacherId);
+    if (!teacher) return next(createError(404, "Teacher not found"));
+
+    const subjects = await Subject.find({ _id: { $in: subjectIds || [] } });
+    if ((subjectIds || []).length !== subjects.length) {
+      return next(createError(400, "One or more subjects invalid"));
+    }
+
+    teacher.qualifiedSubjects = subjectIds || [];
+    const allowed = new Set((subjectIds || []).map((id) => String(id)));
+    teacher.subjects = (teacher.subjects || []).filter((s) => allowed.has(String(s)));
+    await teacher.save();
+
+    res.status(200).json({
+      message: "Qualified subjects updated",
+      qualifiedSubjects: teacher.qualifiedSubjects,
       subjects: teacher.subjects,
     });
   } catch (err) {
@@ -375,5 +418,6 @@ module.exports = {
   searchTeacher,
   getTimeTableByTeacherId,
   assignSubjects,
+  setQualifiedSubjects,
   getTeacherByUserId,
 };

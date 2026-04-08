@@ -44,16 +44,17 @@ const adminOnly = (req, res, next) => {
 
 // Librarian middleware
 const librarianAccess = (req, res, next) => {
-  const userRole = req.user ? req.user.role : null;
-  
-  if (!userRole) {
+  const roleName = req.user ? req.user.roleName : null;
+
+  if (!roleName) {
     return res.status(401).json({
       status: 'error',
       message: 'Authentication required'
     });
   }
-  
-  if (userRole === 'librarian' || userRole === 'admin') {
+
+  const rn = String(roleName).toLowerCase();
+  if (rn === 'librarian' || rn === 'admin') {
     next();
   } else {
     return res.status(403).json({

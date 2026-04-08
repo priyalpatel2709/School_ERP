@@ -1,5 +1,6 @@
 const asyncHandler = require("express-async-handler");
 const createError = require("http-errors");
+const { validationResult } = require("express-validator");
 const {
     getFeeStructureModel,
     getFeeInvoiceModel,
@@ -7,8 +8,11 @@ const {
     getClassModel,
     getStudentModel,
     getUserModel,
+    getSchoolDetailModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
+const { computeSiblingDiscounts } = require("../helper/feeDiscountHelpers");
+const { generateAndSaveFeeReceiptPdf } = require("../helper/pdfDocuments");
 
 // --- Fee Structure Operations ---
 
@@ -152,14 +156,91 @@ const deleteFeeInvoice = asyncHandler(async (req, res, next) => {
 // --- Fee Payment Operations ---
 
 const createFeePayment = asyncHandler(async (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+        return next(createError(400, "Validation error", { errors: errors.array() }));
+    }
+
     const FeePayment = getFeePaymentModel(req.schoolDb);
-    const feePaymentOperations = crudOperations({
-        mainModel: FeePayment,
+    const FeeInvoice = getFeeInvoiceModel(req.schoolDb);
+    const Student = getStudentModel(req.schoolDb);
+    const User = getUserModel(req.usersDb);
+
+    const body = { ...req.body };
+    let receiptNumber = body.receiptNumber;
+    if (!receiptNumber) {
+        const year = new Date().getFullYear();
+        const count = await FeePayment.countDocuments({
+            receiptNumber: new RegExp(`^RCP-${year}`),
+        });
+        receiptNumber = `RCP-${year}-${String(count + 1).padStart(4, "0")}`;
+    }
+
+    const collectedBy = body.collectedBy || req.user._id;
+
+    const payment = new FeePayment({
+        ...body,
+        receiptNumber,
+        collectedBy,
     });
 
-    // Custom logic could be added here to update the Invoice status after payment creation
-    // For now, using standard create
-    feePaymentOperations.create(req, res, next);
+    let saved;
+    try {
+        saved = await payment.save();
+    } catch (err) {
+        return next(createError(500, "Error creating payment", { error: err.message }));
+    }
+
+    const invoice = await FeeInvoice.findById(saved.invoice);
+    if (invoice) {
+        invoice.paidAmount = (invoice.paidAmount || 0) + saved.amount;
+        if (!invoice.payments.map(String).includes(String(saved._id))) {
+            invoice.payments.push(saved._id);
+        }
+        await invoice.save();
+    }
+
+    let studentName = "";
+    let invoiceNumber = "";
+    let schoolName = "";
+    try {
+        const st = await Student.findById(saved.student).populate({
+            path: "user",
+            model: User,
+            select: "name",
+        });
+        if (st && st.user) {
+            const u = st.user;
+            if (typeof u.name === "string") studentName = u.name;
+            else if (u.name && (u.name.firstName || u.name.lastName)) {
+                studentName = [u.name.firstName, u.name.lastName].filter(Boolean).join(" ");
+            }
+        }
+        if (invoice) invoiceNumber = invoice.invoiceNumber || "";
+        const SchoolDetail = getSchoolDetailModel(req.schoolDb);
+        const school = await SchoolDetail.findOne().limit(1).lean();
+        if (school && school.name) schoolName = school.name;
+    } catch (e) {
+        // still return payment if PDF metadata fails
+    }
+
+    try {
+        const pdfUrl = await generateAndSaveFeeReceiptPdf({
+            receiptNumber: saved.receiptNumber,
+            paymentDate: saved.paymentDate,
+            amount: saved.amount,
+            paymentMode: saved.paymentMode,
+            studentName,
+            invoiceNumber,
+            schoolName,
+        });
+        saved.receiptPdfUrl = pdfUrl;
+        await saved.save();
+    } catch (e) {
+        // Payment recorded; PDF can be regenerated later
+    }
+
+    res.status(201).json(saved);
 });
 
 const getAllFeePayments = asyncHandler(async (req, res, next) => {
@@ -261,10 +342,12 @@ const generateBulkInvoices = asyncHandler(async (req, res, next) => {
 
             const subtotal = feeItems.reduce((sum, item) => sum + item.amount, 0);
 
-            // Apply discounts if needed (sibling, merit, etc.)
-            const discounts = [];
-            const totalDiscount = discounts.reduce((sum, d) => sum + d.discountAmount, 0);
-            const totalAmount = subtotal - totalDiscount;
+            const { discounts, totalDiscount } = computeSiblingDiscounts(
+                student,
+                feeStructure,
+                subtotal
+            );
+            const totalAmount = Math.max(0, subtotal - totalDiscount);
 
             // Generate invoice number
             const invoiceCount = await FeeInvoice.countDocuments({

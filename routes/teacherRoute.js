@@ -13,29 +13,31 @@ const {
   searchTeacher,
   getTimeTableByTeacherId,
   assignSubjects,
+  setQualifiedSubjects,
   getTeacherByUserId,
 } = require("../controllers/teacherController");
 
 router.post("/", identifyTenant, protect, createTeacher);
 router.get("/", identifyTenant, protect, getAllTeacher);
 router.get("/search", identifyTenant, protect, searchTeacher);
-router.post("/assign-subjects", identifyTenant, protect, assignSubjects); // New Route
-router.get("/:id", identifyTenant, protect, getTeacherById);
+router.post("/assign-subjects", identifyTenant, protect, assignSubjects);
+router.post("/qualified-subjects", identifyTenant, protect, setQualifiedSubjects);
 router.get(
   "/getTimeTableByTeacherId/:teacherId",
   identifyTenant,
   protect,
   getTimeTableByTeacherId,
 );
-router.put("/:id", identifyTenant, protect, updateTeacherById);
-router.delete("/", identifyTenant, protect, deleteAllTeacher);
-router.delete("/:id", identifyTenant, protect, deleteTeacherById);
 router.post(
   "/createTeacherWithUser",
   identifyTenant,
   protect,
   createTeacherWithUser,
 );
-
 router.get("/byUser/:id", identifyTenant, protect, getTeacherByUserId);
+router.get("/:id", identifyTenant, protect, getTeacherById);
+router.put("/:id", identifyTenant, protect, updateTeacherById);
+router.delete("/", identifyTenant, protect, deleteAllTeacher);
+router.delete("/:id", identifyTenant, protect, deleteTeacherById);
+
 module.exports = router;

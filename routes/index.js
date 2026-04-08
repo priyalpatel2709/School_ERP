@@ -15,6 +15,12 @@ const attendanceRoutes = require("./attendanceRoute");
 const leaveRoutes = require("./leaveRoute");
 const examinationRoutes = require("./examinationRoute");
 const gradingRoutes = require("./gradingRoute");
+const substitutionRoutes = require("./substitutionRoute");
+const admissionRoutes = require("./admissionRoute");
+const payrollRoutes = require("./payrollRoute");
+const transportRoutes = require("./transportRoute");
+const communicationRoutes = require("./communicationRoute");
+const libraryRoutes = require("./library");
 
 module.exports = {
   userRouters,
@@ -33,4 +39,10 @@ module.exports = {
   leaveRoutes,
   examinationRoutes,
   gradingRoutes,
+  substitutionRoutes,
+  admissionRoutes,
+  payrollRoutes,
+  transportRoutes,
+  communicationRoutes,
+  libraryRoutes,
 };

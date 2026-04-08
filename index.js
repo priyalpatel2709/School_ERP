@@ -1,4 +1,6 @@
 const express = require("express");
+const path = require("path");
+const { ensureUploadsDirs } = require("./helper/uploadPaths");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const dotenv = require("dotenv");
@@ -31,6 +33,12 @@ const {
   leaveRoutes,
   examinationRoutes,
   gradingRoutes,
+  substitutionRoutes,
+  admissionRoutes,
+  payrollRoutes,
+  transportRoutes,
+  communicationRoutes,
+  libraryRoutes,
 } = require("./routes");
 
 // Import error handlers
@@ -43,6 +51,9 @@ const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
 
 const app = express();
+
+ensureUploadsDirs();
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 // Security & Performance middleware
 app.use(helmet());
@@ -89,6 +100,12 @@ app.use("/api/v1/attendance", attendanceRoutes);
 app.use("/api/v1/leave", leaveRoutes);
 app.use("/api/v1/examination", examinationRoutes);
 app.use("/api/v1/grading", gradingRoutes);
+app.use("/api/v1/substitution", substitutionRoutes);
+app.use("/api/v1/admissions", admissionRoutes);
+app.use("/api/v1/payroll", payrollRoutes);
+app.use("/api/v1/transport", transportRoutes);
+app.use("/api/v1/communication", communicationRoutes);
+app.use("/api/v1/library", libraryRoutes);
 
 // Error handling
 app.use(notFound);

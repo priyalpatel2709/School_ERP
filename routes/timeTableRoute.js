@@ -12,10 +12,14 @@ const {
   deleteTimeTableById,
   updateTimeTableById,
   deleteLectureFromTimeTable,
+  getTimeTableConflicts,
+  autoGenerateTimeTable,
 } = require("../controllers/timeTableController");
 
 router.post("/", identifyTenant, protect, createTimeTable);
 router.get("/", identifyTenant, protect, getAllTimeTable);
+router.get("/conflicts", identifyTenant, protect, getTimeTableConflicts);
+router.post("/auto-generate", identifyTenant, protect, autoGenerateTimeTable);
 router.get("/class/:classId", identifyTenant, protect, getTimeTableByClassId);
 router.get("/:id", identifyTenant, protect, getTimeTableById);
 router.put("/:id", identifyTenant, protect, updateTimeTableById);

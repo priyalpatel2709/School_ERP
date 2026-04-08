@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
+const identifyTenant = require('../middleware/IdentificationMiddleware');
 const itemController = require('../controllers/library/itemController');
 const borrowingController = require('../controllers/library/borrowingController');
 const { librarianAccess } = require('../middleware/roleMiddleware');
 const { protect } = require('../middleware/authMiddleware');
 
-// Apply protection to all routes
+router.use(identifyTenant);
 router.use(protect);
 
 // Item routes

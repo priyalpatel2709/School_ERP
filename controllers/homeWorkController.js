@@ -227,12 +227,16 @@ const getHomeworkByStudent = asyncHandler(async (req, res, next) => {
   const { studentId } = req.params;
 
   try {
-    // 1. Get Student Class info
-    const student = await Student.findOne({ user: studentId });
+    // 1. Get Student (by Student _id or linked User _id)
+    let student = await Student.findById(studentId);
+    if (!student) {
+      student = await Student.findOne({ user: studentId });
+    }
     if (!student) {
       return next(createError(404, "Student not found"));
     }
 
+    const studentDocId = student._id;
 
     // 2. Fetch all Published homework for this class
     const homeworks = await Homework.find(
@@ -262,7 +266,7 @@ const getHomeworkByStudent = asyncHandler(async (req, res, next) => {
     // 3. Process to add MySubmission status
     const result = homeworks.map((hw) => {
       const mySub = hw.submissions
-        ? hw.submissions.find((s) => s.student.toString() === studentId)
+        ? hw.submissions.find((s) => s.student.toString() === studentDocId.toString())
         : null;
 
       let status = "Pending";
