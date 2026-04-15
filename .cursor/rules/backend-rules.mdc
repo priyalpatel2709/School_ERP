@@ -1,0 +1,92 @@
+---
+alwaysApply: true
+---
+
+# Backend Rules (Custom Structure - Express + Mongoose)
+
+## Architecture (Based on Existing Project)
+
+* Use current structure:
+  controllers → services → models → utils/helper
+* Keep `crudOperations.js` as reusable data layer
+* Controllers handle req/res only
+* Services must call crudOperations or custom logic
+
+## Skill Usage (MANDATORY)
+
+* Use `.cursor/skills/use_crud_operations/SKILL.md` when creating new CRUD modules/endpoints
+* Use `.cursor/skills/optimize_crud/skill.md` when improving existing CRUD performance/safety
+* Use `.cursor/skills/safe_query/skill.md` when implementing/reviewing dynamic filters (for example, getByField)
+
+## Agent Usage
+
+* Use `.cursor/agents/performance_agent.md` for deeper backend performance passes
+* Apply this agent after baseline CRUD generation when optimization is requested
+
+## CRUD Strategy
+
+* Use `crudOperations` for basic APIs
+* Extend via services for complex logic
+* Never duplicate CRUD logic
+
+## Performance (MANDATORY)
+
+* Always use `.lean()` in read queries
+* Add pagination:
+
+  * page
+  * limit
+* Use `.select()` to limit fields
+* Avoid full collection fetch
+
+## Response Format
+
+Always return:
+```js
+{
+  success: true,
+  message: string,
+  data: any,
+  meta?: {
+    page,
+    limit,
+    total
+  }
+}
+```
+
+## Error Handling
+
+* Use `http-errors`
+* Centralized error middleware
+* No raw error exposure
+
+## Validation
+
+* Use `express-validator`
+* Validate all inputs
+* Reject unknown/unsafe query fields in dynamic filter endpoints
+
+## Security
+
+* Sanitize query params (important for getByField)
+* Prevent Mongo injection
+* Validate ObjectId before query
+* Do not pass raw `req.query` directly to Mongoose filters
+* Use field whitelisting for dynamic query APIs
+
+## Logging
+
+* Replace console.log with logger (future improvement)
+
+## File Usage Rules
+
+* controllers → only request/response
+* services → business logic
+* crudOperations → DB abstraction
+* models → schema only
+
+## IMPORTANT
+
+* Do NOT directly use Mongoose in controllers
+* Always go through service or crudOperations
