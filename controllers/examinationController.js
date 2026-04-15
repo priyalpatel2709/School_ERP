@@ -418,11 +418,23 @@ const getClassPerformanceAnalysis = asyncHandler(async (req, res, next) => {
     const { examinationId, classId } = req.params;
 
     const ExamResult = getExamResultModel(req.schoolDb);
+    const Examination = getExaminationModel(req.schoolDb);
+    const Student = getStudentModel(req.schoolDb);
+    const Class = getClassModel(req.schoolDb);
+    const User = getUserModel(req.usersDb);
 
     const results = await ExamResult.find({
         examination: examinationId,
         class: classId
-    });
+    })
+        .populate({ path: "examination", model: Examination, select: "examName examType academicYear" })
+        .populate({
+            path: "student",
+            model: Student,
+            select: "user rollNumber admissionNumber",
+            populate: { path: "user", model: User, select: "name" },
+        })
+        .populate({ path: "class", model: Class, select: "classNumber division academicYear" });
 
     const totalStudents = results.length;
     const passedStudents = results.filter(r => r.isPassed).length;
