@@ -28,12 +28,13 @@ const {
 // --- Examination Routes ---
 router.post("/exams", identifyTenant, protect, authorize(permissions.EXAM_CREATE), createExamination);
 router.get("/exams", identifyTenant, protect, authorize(permissions.EXAM_VIEW), getAllExaminations);
-router.get("/exams/class/:classId", identifyTenant, protect, authorize(permissions.EXAM_VIEW), getExaminationsByClass);
 router.get("/exams/:id", identifyTenant, protect, authorize(permissions.EXAM_VIEW), getExaminationById);
 router.put("/exams/:id", identifyTenant, protect, authorize(permissions.EXAM_CREATE), updateExamination);
-router.put("/exams/:id/publish", identifyTenant, protect, authorize(permissions.RESULT_PUBLISH), publishExamResults);
 router.delete("/exams/:id", identifyTenant, protect, authorize(permissions.EXAM_CREATE), deleteExamination);
 
+// --- Examination Class Routes ---
+router.get("/exams/class/:classId", identifyTenant, protect, authorize(permissions.EXAM_VIEW), getExaminationsByClass);
+router.put("/exams/:id/publish", identifyTenant, protect, authorize(permissions.RESULT_PUBLISH), publishExamResults);
 // --- Exam Result Routes ---
 router.post("/results", identifyTenant, protect, authorize(permissions.MARKS_ENTER), createExamResult);
 router.post("/results/bulk", identifyTenant, protect, authorize(permissions.MARKS_ENTER), bulkMarkEntry);

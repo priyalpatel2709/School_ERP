@@ -12,7 +12,7 @@ const populateNestedFields = (query, populateFields) => {
         }
 
         return populateObject;
-      }
+      },
     );
   };
 
@@ -71,7 +71,7 @@ const crudOperations = (models) => {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
         return next(
-          createError(400, "Validation error", { errors: errors.array() })
+          createError(400, "Validation error", { errors: errors.array() }),
         );
       }
 
@@ -81,7 +81,7 @@ const crudOperations = (models) => {
         res.status(201).json(savedDocument);
       } catch (err) {
         next(
-          createError(500, "Error creating document", { error: err.message })
+          createError(500, "Error creating document", { error: err.message }),
         );
       }
     },
@@ -93,7 +93,7 @@ const crudOperations = (models) => {
         const updatedDocument = await mainModel.findByIdAndUpdate(
           req.params.id,
           updateData,
-          { new: true, runValidators: true }
+          { new: true, runValidators: true },
         );
 
         if (updatedDocument) {
@@ -116,7 +116,7 @@ const crudOperations = (models) => {
       } catch (err) {
         console.error("Error in updateById:", err); // Log the error for debugging
         next(
-          createError(500, "Error updating document", { error: err.message })
+          createError(500, "Error updating document", { error: err.message }),
         );
       }
     },
@@ -125,7 +125,7 @@ const crudOperations = (models) => {
     deleteById: async (req, res, next) => {
       try {
         const deletedDocument = await mainModel.findByIdAndDelete(
-          req.params.id
+          req.params.id,
         );
         if (deletedDocument) {
           res.status(200).json({ message: "Document deleted successfully" });
@@ -135,7 +135,7 @@ const crudOperations = (models) => {
       } catch (err) {
         console.error("Error in deleteById:", err); // Log the error for debugging
         next(
-          createError(500, "Error deleting document", { error: err.message })
+          createError(500, "Error deleting document", { error: err.message }),
         );
       }
     },
@@ -148,7 +148,7 @@ const crudOperations = (models) => {
       } catch (err) {
         console.error("Error in deleteAll:", err); // Log the error for debugging
         next(
-          createError(500, "Error deleting documents", { error: err.message })
+          createError(500, "Error deleting documents", { error: err.message }),
         );
       }
     },
@@ -178,7 +178,7 @@ const crudOperations = (models) => {
           } catch (error) {
             // If conversion fails, use the original value
             next(
-              createError(500, "Error fetching data", { error: err.message })
+              createError(500, "Error fetching data", { error: err.message }),
             );
           }
         }
