@@ -13,6 +13,7 @@ const getNotificationModel = require("./notificationModel");
 const getFeeStructureModel = require("./feeStructureModel");
 const getFeeInvoiceModel = require("./feeInvoiceModel");
 const getFeePaymentModel = require("./feePaymentModel");
+const getFeeAuditLogModel = require("./feeAuditLogModel");
 
 // Phase 2: Attendance Models
 const getStudentAttendanceModel = require("./studentAttendanceModel");
@@ -47,6 +48,7 @@ module.exports = {
   getFeeStructureModel,
   getFeeInvoiceModel,
   getFeePaymentModel,
+  getFeeAuditLogModel,
   // Phase 2: Attendance
   getStudentAttendanceModel,
   getStaffAttendanceModel,
