@@ -5,6 +5,8 @@ const teacherModel = mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     classes: [{ type: mongoose.Schema.Types.ObjectId, ref: "Class" }],
     calendar: { type: mongoose.Schema.Types.ObjectId, ref: "Calendar" }, // todo create calendar
+    /** Subjects the teacher is approved to teach (HR / qualification). Assigned teaching load must be ⊆ this when set. */
+    qualifiedSubjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
     subjects: [{ type: mongoose.Schema.Types.ObjectId, ref: "Subject" }],
 
     // Phase 2: Qualification Details

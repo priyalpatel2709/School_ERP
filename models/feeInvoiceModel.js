@@ -99,6 +99,38 @@ const feeInvoiceSchema = mongoose.Schema(
             }
         ],
 
+        reminders: [
+            {
+                channel: {
+                    type: String,
+                    enum: ["SMS", "Email", "WhatsApp"],
+                    required: true,
+                },
+                status: {
+                    type: String,
+                    enum: ["Queued", "Sent", "Failed"],
+                    default: "Queued",
+                },
+                recipient: { type: String },
+                sentAt: { type: Date, default: Date.now },
+                message: { type: String },
+                providerResponse: { type: String },
+            }
+        ],
+
+        lateFeeWaivers: [
+            {
+                amount: { type: Number, required: true, min: 0 },
+                reason: { type: String, required: true },
+                approvedBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+                approvedAt: { type: Date, default: Date.now },
+            }
+        ],
+
         // Notes and Remarks
         notes: { type: String },
         internalNotes: { type: String }, // Not visible to parents
@@ -126,6 +158,7 @@ const feeInvoiceSchema = mongoose.Schema(
 feeInvoiceSchema.index({ student: 1, academicYear: 1 });
 feeInvoiceSchema.index({ status: 1, dueDate: 1 });
 // feeInvoiceSchema.index({ invoiceNumber: 1 });
+feeInvoiceSchema.index({ class: 1, academicYear: 1, status: 1 });
 
 // Calculate balance before saving
 feeInvoiceSchema.pre("save", function (next) {

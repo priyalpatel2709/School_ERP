@@ -22,6 +22,13 @@ const getGradingSystemModel = require("../models/gradingSystemModel");
 const getStudentAttendanceModel = require("../models/studentAttendanceModel");
 const getStaffAttendanceModel = require("../models/staffAttendanceModel");
 const getLeaveApplicationModel = require("../models/leaveApplicationModel");
+const getAdmissionApplicationModel = require("../models/admissionApplicationModel");
+const getPayrollRunModel = require("../models/payrollRunModel");
+const getTransportRouteModel = require("../models/transportRouteModel");
+const getTransportVehicleModel = require("../models/transportVehicleModel");
+const getLibraryItemModel = require("../models/libraryItemModel");
+const getLibraryBorrowingModel = require("../models/libraryBorrowingModel");
+const getSubstitutionModel = require("../models/substitutionModel");
 
 const { connectToDatabase } = require("../config/db");
 let userDB, schoolDB;
@@ -61,6 +68,13 @@ const seedDatabase = async () => {
     const StudentAttendance = getStudentAttendanceModel(schoolDB);
     const StaffAttendance = getStaffAttendanceModel(schoolDB);
     const LeaveApplication = getLeaveApplicationModel(schoolDB);
+    const AdmissionApplication = getAdmissionApplicationModel(schoolDB);
+    const PayrollRun = getPayrollRunModel(schoolDB);
+    const TransportRoute = getTransportRouteModel(schoolDB);
+    const TransportVehicle = getTransportVehicleModel(schoolDB);
+    const LibraryItem = getLibraryItemModel(schoolDB);
+    const LibraryBorrowing = getLibraryBorrowingModel(schoolDB);
+    const Substitution = getSubstitutionModel(schoolDB);
 
     // Create users with detailed fields
     const users = await User.create([
@@ -486,6 +500,44 @@ const seedDatabase = async () => {
       },
     ]);
 
+    const librarianUsers = await User.create([
+      {
+        name: {
+          firstName: "Laura",
+          middleName: "K",
+          lastName: "Bookman",
+        },
+        gender: "female",
+        dateOfBirth: "1984-06-01",
+        email: "librarian@springfieldhigh.edu",
+        loginID: "librarian_abc",
+        password: "123",
+        deviceToken: "token_lib",
+        schoolID: "school_ABC",
+        isActive: true,
+        age: 41,
+        address: {
+          permanentAddress: {
+            street: "200 Library Ln",
+            city: "Springfield",
+            state: "IL",
+            zip: "62701",
+            country: "USA",
+          },
+          currentAddress: {
+            street: "200 Library Ln",
+            city: "Springfield",
+            state: "IL",
+            zip: "62701",
+            country: "USA",
+          },
+        },
+        roleName: "Librarian",
+        metaData: [{ key: "dept", value: "Library" }],
+      },
+    ]);
+    const librarianUser = librarianUsers[0];
+
     // Create teachers
     const teachers = await Teacher.create([
       {
@@ -860,6 +912,83 @@ const seedDatabase = async () => {
     await Teacher.findByIdAndUpdate(teachers[2]._id, {
       classes: [classes[0]._id],
       subjects: [subjects[1]._id, subjects[7]._id, subjects[9]._id],
+    });
+
+    await Teacher.findByIdAndUpdate(teachers[3]._id, {
+      classes: [classes[0]._id, classes[1]._id],
+      subjects: [
+        subjects[3]._id,
+        subjects[4]._id,
+        subjects[5]._id,
+        subjects[6]._id,
+      ],
+    });
+    await Teacher.findByIdAndUpdate(teachers[4]._id, {
+      classes: [classes[0]._id, classes[1]._id],
+      subjects: [
+        subjects[5]._id,
+        subjects[6]._id,
+        subjects[7]._id,
+        subjects[8]._id,
+        subjects[9]._id,
+      ],
+    });
+
+    // Qualified subjects (must include assigned subjects when list is non-empty)
+    await Teacher.findByIdAndUpdate(teachers[0]._id, {
+      qualifiedSubjects: [
+        subjects[0]._id,
+        subjects[1]._id,
+        subjects[2]._id,
+        subjects[3]._id,
+        subjects[4]._id,
+        subjects[8]._id,
+      ],
+    });
+    await Teacher.findByIdAndUpdate(teachers[1]._id, {
+      qualifiedSubjects: [
+        subjects[0]._id,
+        subjects[1]._id,
+        subjects[2]._id,
+        subjects[3]._id,
+      ],
+    });
+    await Teacher.findByIdAndUpdate(teachers[2]._id, {
+      qualifiedSubjects: [
+        subjects[0]._id,
+        subjects[1]._id,
+        subjects[2]._id,
+        subjects[5]._id,
+        subjects[7]._id,
+        subjects[8]._id,
+        subjects[9]._id,
+      ],
+    });
+    await Teacher.findByIdAndUpdate(teachers[3]._id, {
+      qualifiedSubjects: [
+        subjects[3]._id,
+        subjects[4]._id,
+        subjects[5]._id,
+        subjects[6]._id,
+        subjects[7]._id,
+      ],
+    });
+    await Teacher.findByIdAndUpdate(teachers[4]._id, {
+      qualifiedSubjects: [
+        subjects[2]._id,
+        subjects[5]._id,
+        subjects[6]._id,
+        subjects[7]._id,
+        subjects[8]._id,
+        subjects[9]._id,
+      ],
+    });
+
+    await Student.findByIdAndUpdate(students[0]._id, {
+      siblings: [students[1]._id],
+    });
+    await Student.findByIdAndUpdate(students[1]._id, {
+      siblings: [students[0]._id],
     });
 
     // create time table
@@ -1338,6 +1467,16 @@ const seedDatabase = async () => {
         roleName: "Accountant",
         access: ["fee:read", "fee:write", "student:read", "user:read"],
         metaData: [{ key: "description", value: "Finance access" }],
+      },
+      {
+        roleName: "Librarian",
+        access: [
+          "library:read",
+          "library:write",
+          "student:read",
+          "notification:read",
+        ],
+        metaData: [{ key: "description", value: "Library circulation" }],
       },
     ]);
 
@@ -2145,6 +2284,156 @@ const seedDatabase = async () => {
     console.log("✓ Leave applications created");
 
     // ========================================
+    // PHASE 3: ADMISSIONS, TRANSPORT, LIBRARY, SUBSTITUTION, PAYROLL (seed)
+    // ========================================
+    const admissionSeeds = await AdmissionApplication.create([
+      {
+        academicYear: "2025-2026",
+        applicantName: "Samuel Applicant",
+        dateOfBirth: new Date("2014-03-10"),
+        gradeApplying: "9",
+        parentName: "Robert Applicant",
+        phone: "555-0101",
+        email: "robert.applicant@example.com",
+        stage: "Enquiry",
+      },
+      {
+        academicYear: "2025-2026",
+        applicantName: "Taylor Candidate",
+        dateOfBirth: new Date("2013-08-22"),
+        gradeApplying: "10",
+        parentName: "Pat Candidate",
+        phone: "555-0102",
+        email: "pat.candidate@example.com",
+        stage: "Interview",
+        testScore: 78,
+        interviewNotes: "Strong communication skills",
+      },
+      {
+        academicYear: "2025-2026",
+        applicantName: "Jordan Merit",
+        dateOfBirth: new Date("2013-11-05"),
+        gradeApplying: "10",
+        parentName: "Casey Merit",
+        phone: "555-0103",
+        email: "casey.merit@example.com",
+        stage: "MeritList",
+        testScore: 92,
+        meritRank: 1,
+      },
+    ]);
+
+    const transportVehicleSeed = await TransportVehicle.create({
+      registrationNumber: "BUS-SHS-001",
+      makeModel: "Mini Bus 32",
+      capacity: 32,
+      driverName: "Mike Driver",
+      driverPhone: "555-0200",
+      gpsDeviceId: "GPS-DEMO-001",
+      isActive: true,
+    });
+
+    const transportRouteSeed = await TransportRoute.create({
+      name: "North Springfield Loop",
+      academicYear: "2025-2026",
+      stops: [
+        { name: "Main Gate", pickupTime: "07:15" },
+        { name: "Oak Street", pickupTime: "07:25" },
+        { name: "Maple Ave", pickupTime: "07:35" },
+      ],
+      assignedVehicle: transportVehicleSeed._id,
+      isActive: true,
+    });
+
+    await TransportVehicle.findByIdAndUpdate(transportVehicleSeed._id, {
+      route: transportRouteSeed._id,
+    });
+
+    const libraryItems = await LibraryItem.create([
+      {
+        title: "Introduction to Algorithms",
+        author: "Cormen et al.",
+        isbn: "978-0262033848",
+        category: "Computer Science",
+        shelfLocation: "CS-A1",
+        totalCopies: 3,
+        availableCopies: 3,
+        finePerDay: 10,
+        status: "Active",
+      },
+      {
+        title: "A Brief History of Time",
+        author: "Stephen Hawking",
+        isbn: "978-0553380163",
+        category: "Science",
+        shelfLocation: "SCI-B2",
+        totalCopies: 2,
+        availableCopies: 2,
+        finePerDay: 5,
+        status: "Active",
+      },
+    ]);
+
+    const dueLib = new Date();
+    dueLib.setDate(dueLib.getDate() + 10);
+
+    const libraryBorrowingSeed = await LibraryBorrowing.create({
+      item: libraryItems[0]._id,
+      borrowerType: "Student",
+      borrowerUser: users[5]._id,
+      student: students[0]._id,
+      dueDate: dueLib,
+      status: "CheckedOut",
+      renewalsCount: 0,
+    });
+
+    await LibraryItem.findByIdAndUpdate(libraryItems[0]._id, {
+      availableCopies: 2,
+    });
+
+    const substitutionsSeed = await Substitution.create([
+      {
+        academicYear: "2025-2026",
+        date: new Date("2026-01-21"),
+        dayName: "Tuesday",
+        class: classes[0]._id,
+        periodIndex: 2,
+        subject: subjects[0]._id,
+        absentTeacher: teachers[2]._id,
+        substituteTeacher: teachers[0]._id,
+        leaveApplication: leaveApplications[2]._id,
+        status: "Scheduled",
+        notes: "Seeded cover class from seed script",
+      },
+    ]);
+
+    const payrollLines = teachers.map((t) => {
+      const basic = t.salary?.basic ?? 50000;
+      const allowances = t.salary?.allowances ?? 0;
+      const deductions = Math.round(basic * 0.04);
+      const net = basic + allowances - deductions;
+      return {
+        teacher: t._id,
+        basic,
+        allowances,
+        deductions,
+        net,
+      };
+    });
+
+    const payrollDraftSeed = await PayrollRun.create({
+      month: 3,
+      year: 2026,
+      academicYear: "2025-2026",
+      status: "Draft",
+      lines: payrollLines,
+    });
+
+    console.log(
+      `✓ Phase 3 seed: ${admissionSeeds.length} admissions, transport route+vehicle, ${libraryItems.length} library items, 1 borrowing, ${substitutionsSeed.length} substitution, payroll draft (${payrollDraftSeed.lines.length} lines), librarian user`,
+    );
+
+    // ========================================
     // PHASE 2: NOTIFICATIONS
     // ========================================
     const notifications = await Notification.create([
@@ -2252,6 +2541,12 @@ const seedDatabase = async () => {
     console.log(`✓ Student Attendance: ${studentAttendance.length}`);
     console.log(`✓ Staff Attendance: ${staffAttendance.length}`);
     console.log(`✓ Leave Applications: ${leaveApplications.length}`);
+    console.log(`✓ Admissions: ${admissionSeeds.length}`);
+    console.log(`✓ Transport: 1 route, 1 vehicle`);
+    console.log(`✓ Library items: ${libraryItems.length} (+ 1 active borrowing)`);
+    console.log(`✓ Substitutions: ${substitutionsSeed.length}`);
+    console.log(`✓ Payroll drafts: 1 (${payrollDraftSeed.lines.length} lines)`);
+    console.log(`✓ Librarian login: ${librarianUser.email} (${librarianUser.loginID})`);
     console.log(`✓ Notifications: ${notifications.length}`);
     console.log("========================================\n");
   } catch (error) {

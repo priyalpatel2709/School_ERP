@@ -11,9 +11,35 @@ const {
   assignRoleToUser,
   getUsersBySchoolID,
   logoutUser,
+  uploadProfileImage,
 } = require("../controllers/userController");
 const identifyTenant = require("../middleware/IdentificationMiddleware");
 const { protect } = require("../middleware/authMiddleware");
+const {
+  uploadProfileImageMiddleware,
+} = require("../middleware/profileImageUpload");
+
+const setUploadTargetSelf = (req, _res, next) => {
+  req.uploadTargetUserId = req.user._id;
+  next();
+};
+
+const setUploadTargetFromParam = (req, _res, next) => {
+  req.uploadTargetUserId = req.params.id;
+  next();
+};
+
+const canUploadProfileForUser = (req, res, next) => {
+  const target = req.params.id;
+  const self = String(req.user._id) === String(target);
+  const admin = String(req.user.roleName || "").toLowerCase() === "admin";
+  if (self || admin) {
+    return next();
+  }
+  return res.status(403).json({
+    message: "Not allowed to update this user's profile image",
+  });
+};
 
 // Route: POST /api/users/login
 // Description: Authenticate user and generate token
@@ -34,6 +60,26 @@ router.get("/users/school", identifyTenant, protect, getUsersBySchoolID);
 // Route: GET /api/users/users
 // Description: Get all users
 router.get("/users", identifyTenant, protect, getAllUsers);
+
+// Profile image upload (multipart field name: image, max 5MB, jpeg/png/gif/webp)
+router.post(
+  "/users/profile-image",
+  identifyTenant,
+  protect,
+  setUploadTargetSelf,
+  uploadProfileImageMiddleware,
+  uploadProfileImage,
+);
+
+router.post(
+  "/users/:id/profile-image",
+  identifyTenant,
+  protect,
+  canUploadProfileForUser,
+  setUploadTargetFromParam,
+  uploadProfileImageMiddleware,
+  uploadProfileImage,
+);
 
 // Route: GET /api/users/users/:id
 // Description: Get user by ID

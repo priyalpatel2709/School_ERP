@@ -266,6 +266,182 @@ const getClassAttendanceByDate = asyncHandler(async (req, res, next) => {
   });
 });
 
+// Get class-wise student attendance report (daily / monthly / yearly)
+const getClassAttendanceReport = asyncHandler(async (req, res, next) => {
+  const { classId } = req.params;
+  const { period = "daily", date, month, year, page = 1, limit = 25 } = req.query;
+
+  const validPeriods = ["daily", "monthly", "yearly"];
+  if (!validPeriods.includes(period)) {
+    return next(
+      createError(400, "Invalid period. Allowed values are daily, monthly, yearly"),
+    );
+  }
+
+  if (!classId || !classId.match(/^[0-9a-fA-F]{24}$/)) {
+    return next(createError(400, "Invalid classId"));
+  }
+
+  const parsedPage = Math.max(parseInt(page, 10) || 1, 1);
+  const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 25, 1), 100);
+
+  let startDate;
+  let endDate;
+  const today = new Date();
+
+  if (period === "daily") {
+    if (!date) {
+      return next(createError(400, "date is required for daily report"));
+    }
+    const parsedDate = new Date(date);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return next(createError(400, "Invalid date format"));
+    }
+
+    startDate = new Date(parsedDate);
+    startDate.setHours(0, 0, 0, 0);
+    endDate = new Date(parsedDate);
+    endDate.setHours(23, 59, 59, 999);
+  } else if (period === "monthly") {
+    const parsedMonth = parseInt(month, 10);
+    const parsedYear = parseInt(year, 10);
+    if (!parsedMonth || parsedMonth < 1 || parsedMonth > 12 || !parsedYear) {
+      return next(createError(400, "Valid month (1-12) and year are required"));
+    }
+    startDate = new Date(parsedYear, parsedMonth - 1, 1);
+    endDate = new Date(parsedYear, parsedMonth, 0, 23, 59, 59, 999);
+  } else {
+    const parsedYear = parseInt(year, 10);
+    const reportYear = parsedYear || today.getFullYear();
+    startDate = new Date(reportYear, 0, 1);
+    endDate = new Date(reportYear, 11, 31, 23, 59, 59, 999);
+  }
+
+  const StudentAttendance = getStudentAttendanceModel(req.schoolDb);
+  const Student = getStudentModel(req.schoolDb);
+  const User = getUserModel(req.usersDb);
+
+  const baseFilter = {
+    class: classId,
+    date: { $gte: startDate, $lte: endDate },
+  };
+
+  const totalStudentsWithAttendance = await StudentAttendance.distinct("student", baseFilter);
+  const total = totalStudentsWithAttendance.length;
+  const skip = (parsedPage - 1) * parsedLimit;
+
+  const studentIds = totalStudentsWithAttendance.slice(skip, skip + parsedLimit);
+
+  const studentAttendanceDocs = await StudentAttendance.find({
+    ...baseFilter,
+    student: { $in: studentIds },
+  })
+    .select("student class date attendanceMode dailyStatus overallStatus")
+    .sort({ date: 1 })
+    .lean();
+
+  const groupedByStudent = new Map();
+
+  studentAttendanceDocs.forEach((record) => {
+    const studentKey = record.student.toString();
+    if (!groupedByStudent.has(studentKey)) {
+      groupedByStudent.set(studentKey, {
+        student: record.student,
+        records: [],
+      });
+    }
+    groupedByStudent.get(studentKey).records.push(record);
+  });
+
+  const studentProfiles = await Student.find({ _id: { $in: studentIds } })
+    .select("user rollNumber admissionNumber")
+    .populate({ path: "user", model: User, select: "name" })
+    .lean();
+
+  const studentProfileMap = new Map(
+    studentProfiles.map((profile) => [profile._id.toString(), profile]),
+  );
+
+  const attendanceReport = Array.from(groupedByStudent.values()).map((studentData) => {
+    const attendance = studentData.records;
+    const presentDays = attendance.filter((a) => a.overallStatus === "Present").length;
+    const absentDays = attendance.filter((a) => a.overallStatus === "Absent").length;
+    const partialDays = attendance.filter((a) => a.overallStatus === "Partial").length;
+    const leaveDays = attendance.filter((a) => a.overallStatus === "On Leave").length;
+    const totalDays = attendance.length;
+    const attendancePercentage =
+      totalDays > 0 ? Number(((presentDays / totalDays) * 100).toFixed(2)) : 0;
+
+    const profile = studentProfileMap.get(studentData.student.toString()) || null;
+
+    return {
+      student: profile,
+      summary: {
+        totalDays,
+        presentDays,
+        absentDays,
+        partialDays,
+        leaveDays,
+        attendancePercentage,
+      },
+      attendanceRecords: attendance,
+    };
+  });
+
+  const statusCounts = await StudentAttendance.aggregate([
+    { $match: baseFilter },
+    {
+      $group: {
+        _id: "$overallStatus",
+        count: { $sum: 1 },
+      },
+    },
+  ]);
+
+  const overallCounts = {
+    Present: 0,
+    Absent: 0,
+    Partial: 0,
+    "On Leave": 0,
+  };
+
+  statusCounts.forEach((item) => {
+    if (Object.prototype.hasOwnProperty.call(overallCounts, item._id)) {
+      overallCounts[item._id] = item.count;
+    }
+  });
+
+  const totalAttendanceRecords =
+    overallCounts.Present +
+    overallCounts.Absent +
+    overallCounts.Partial +
+    overallCounts["On Leave"];
+  const overallAttendancePercentage =
+    totalAttendanceRecords > 0
+      ? Number(((overallCounts.Present / totalAttendanceRecords) * 100).toFixed(2))
+      : 0;
+
+  res.status(200).json({
+    success: true,
+    message: `Class attendance ${period} report fetched successfully`,
+    data: attendanceReport,
+    overallSummary: {
+      totalStudentsWithAttendance: total,
+      totalAttendanceRecords,
+      presentRecords: overallCounts.Present,
+      absentRecords: overallCounts.Absent,
+      partialRecords: overallCounts.Partial,
+      leaveRecords: overallCounts["On Leave"],
+      overallAttendancePercentage,
+    },
+    meta: {
+      page: parsedPage,
+      limit: parsedLimit,
+      total,
+    },
+  });
+});
+
 // Staff check-in
 const staffCheckIn = asyncHandler(async (req, res, next) => {
   const { staff: staffInput, location, method, status } = req.body;
@@ -531,6 +707,7 @@ module.exports = {
   bulkMarkStudentAttendance,
   getMonthlyAttendanceReport,
   getClassAttendanceByDate,
+  getClassAttendanceReport,
   // Staff Attendance
   createStaffAttendance,
   getAllStaffAttendance,

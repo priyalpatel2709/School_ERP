@@ -123,7 +123,12 @@ const examResultSchema = mongoose.Schema(
                 key: { type: String },
                 value: mongoose.Schema.Types.Mixed
             }
-        ]
+        ],
+
+        createdBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User"
+        }
     },
     { timestamps: true }
 );

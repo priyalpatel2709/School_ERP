@@ -22,6 +22,7 @@ const {
     getStudentExamResults,
     verifyExamResult,
     getClassPerformanceAnalysis,
+    generateReportCardPdf,
 } = require("../controllers/examinationController");
 
 // --- Examination Routes ---
@@ -42,6 +43,7 @@ router.get("/results/student/:studentId", identifyTenant, protect, authorize(per
 router.get("/results/:id", identifyTenant, protect, authorize(permissions.EXAM_VIEW), getExamResultById);
 router.put("/results/:id", identifyTenant, protect, authorize(permissions.MARKS_ENTER, permissions.MARKS_VERIFY, permissions.RESULT_PUBLISH, permissions.REPORT_CARD_GENERATE), updateExamResult);
 router.put("/results/:id/verify", identifyTenant, protect, authorize(permissions.MARKS_VERIFY), verifyExamResult);
+router.post("/results/:id/report-card", identifyTenant, protect, authorize(permissions.REPORT_CARD_GENERATE), generateReportCardPdf);
 router.delete("/results/:id", identifyTenant, protect, authorize(permissions.EXAM_CREATE), deleteExamResult);
 
 // --- Analysis & Rankings ---

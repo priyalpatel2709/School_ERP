@@ -50,7 +50,7 @@ const leaveApplicationSchema = mongoose.Schema(
 
         totalDays: {
             type: Number,
-            required: true
+          
         },
 
         reason: {

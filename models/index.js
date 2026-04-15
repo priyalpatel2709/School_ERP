@@ -13,6 +13,7 @@ const getNotificationModel = require("./notificationModel");
 const getFeeStructureModel = require("./feeStructureModel");
 const getFeeInvoiceModel = require("./feeInvoiceModel");
 const getFeePaymentModel = require("./feePaymentModel");
+const getFeeAuditLogModel = require("./feeAuditLogModel");
 
 // Phase 2: Attendance Models
 const getStudentAttendanceModel = require("./studentAttendanceModel");
@@ -23,6 +24,14 @@ const getLeaveApplicationModel = require("./leaveApplicationModel");
 const getExaminationModel = require("./examinationModel");
 const getExamResultModel = require("./examResultModel");
 const getGradingSystemModel = require("./gradingSystemModel");
+
+const getSubstitutionModel = require("./substitutionModel");
+const getAdmissionApplicationModel = require("./admissionApplicationModel");
+const getPayrollRunModel = require("./payrollRunModel");
+const getTransportRouteModel = require("./transportRouteModel");
+const getTransportVehicleModel = require("./transportVehicleModel");
+const getLibraryItemModel = require("./libraryItemModel");
+const getLibraryBorrowingModel = require("./libraryBorrowingModel");
 
 module.exports = {
   getHomeworkModel,
@@ -39,6 +48,7 @@ module.exports = {
   getFeeStructureModel,
   getFeeInvoiceModel,
   getFeePaymentModel,
+  getFeeAuditLogModel,
   // Phase 2: Attendance
   getStudentAttendanceModel,
   getStaffAttendanceModel,
@@ -47,4 +57,11 @@ module.exports = {
   getExaminationModel,
   getExamResultModel,
   getGradingSystemModel,
+  getSubstitutionModel,
+  getAdmissionApplicationModel,
+  getPayrollRunModel,
+  getTransportRouteModel,
+  getTransportVehicleModel,
+  getLibraryItemModel,
+  getLibraryBorrowingModel,
 };

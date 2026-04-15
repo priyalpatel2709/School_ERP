@@ -91,6 +91,29 @@ const feePaymentSchema = mongoose.Schema(
             }
         },
 
+        refunds: [
+            {
+                amount: { type: Number, required: true, min: 0 },
+                reason: { type: String, required: true },
+                approvedBy: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "User",
+                    required: true,
+                },
+                approvedAt: { type: Date, default: Date.now },
+                reference: { type: String },
+            }
+        ],
+
+        totalRefunded: { type: Number, default: 0 },
+
+        gatewayMeta: {
+            gatewayName: { type: String },
+            gatewayPaymentId: { type: String },
+            webhookEventId: { type: String },
+            webhookReceivedAt: { type: Date },
+        },
+
         // Notes
         remarks: { type: String },
         internalNotes: { type: String },

@@ -10,6 +10,7 @@ const {
     getUserModel,
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
+const { generateAndSaveReportCardPdf } = require("../helper/pdfDocuments");
 
 // --- Examination Operations ---
 
@@ -417,11 +418,23 @@ const getClassPerformanceAnalysis = asyncHandler(async (req, res, next) => {
     const { examinationId, classId } = req.params;
 
     const ExamResult = getExamResultModel(req.schoolDb);
+    const Examination = getExaminationModel(req.schoolDb);
+    const Student = getStudentModel(req.schoolDb);
+    const Class = getClassModel(req.schoolDb);
+    const User = getUserModel(req.usersDb);
 
     const results = await ExamResult.find({
         examination: examinationId,
         class: classId
-    });
+    })
+        .populate({ path: "examination", model: Examination, select: "examName examType academicYear" })
+        .populate({
+            path: "student",
+            model: Student,
+            select: "user rollNumber admissionNumber",
+            populate: { path: "user", model: User, select: "name" },
+        })
+        .populate({ path: "class", model: Class, select: "classNumber division academicYear" });
 
     const totalStudents = results.length;
     const passedStudents = results.filter(r => r.isPassed).length;
@@ -455,6 +468,72 @@ const getClassPerformanceAnalysis = asyncHandler(async (req, res, next) => {
     });
 });
 
+const generateReportCardPdf = asyncHandler(async (req, res, next) => {
+    const ExamResult = getExamResultModel(req.schoolDb);
+    const Examination = getExaminationModel(req.schoolDb);
+    const Student = getStudentModel(req.schoolDb);
+    const Subject = getSubjectModel(req.schoolDb);
+    const User = getUserModel(req.usersDb);
+
+    const result = await ExamResult.findById(req.params.id)
+        .populate({ path: "examination", model: Examination, select: "examName" })
+        .populate({
+            path: "student",
+            model: Student,
+            populate: { path: "user", model: User, select: "name" },
+        })
+        .populate("class", "classNumber division academicYear")
+        .populate("subjectMarks.subject", "name code");
+
+    if (!result) {
+        return next(createError(404, "Exam result not found"));
+    }
+    if (!["Verified", "Published"].includes(result.status)) {
+        return next(createError(400, "Result must be verified or published"));
+    }
+
+    let studentName = "";
+    if (result.student && result.student.user) {
+        const u = result.student.user;
+        if (typeof u.name === "string") studentName = u.name;
+        else if (u.name && (u.name.firstName || u.name.lastName)) {
+            studentName = [u.name.firstName, u.name.lastName].filter(Boolean).join(" ");
+        }
+    }
+    const classLabel = result.class
+        ? `${result.class.classNumber}-${result.class.division}`
+        : "";
+    const subjectRows = (result.subjectMarks || []).map((sm) => ({
+        name: sm.subject && sm.subject.name ? sm.subject.name : "Subject",
+        obtained: sm.marksObtained,
+        max: sm.maxMarks,
+        percentage: sm.percentage,
+        grade: sm.grade,
+    }));
+    const remarks = [result.classTeacherRemarks, result.principalRemarks]
+        .filter(Boolean)
+        .join(" ");
+
+    const url = await generateAndSaveReportCardPdf({
+        studentName,
+        classLabel,
+        examName: result.examination ? result.examination.examName : "",
+        academicYear: result.academicYear,
+        overallPercentage: result.overallPercentage,
+        overallGrade: result.overallGrade,
+        classRank: result.classRank,
+        subjectRows,
+        remarks,
+    });
+
+    result.reportCardGenerated = true;
+    result.reportCardUrl = url;
+    result.reportCardGeneratedAt = new Date();
+    await result.save();
+
+    res.status(200).json({ success: true, data: result });
+});
+
 module.exports = {
     // Examination
     createExamination,
@@ -476,4 +555,5 @@ module.exports = {
     getStudentExamResults,
     verifyExamResult,
     getClassPerformanceAnalysis,
+    generateReportCardPdf,
 };

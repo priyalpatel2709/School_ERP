@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const createError = require("http-errors");
 const {
   getTimeTableModel,
   getTeacherModel,
@@ -8,6 +9,7 @@ const {
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 const { timeTablePopulateModel } = require("../utils/miscellaneousFunctions");
+const { findTeacherSlotConflicts, DAYS } = require("../utils/timeTableConflicts");
 
 const createTimeTable = asyncHandler(async (req, res, next) => {
   const TimeTable = getTimeTableModel(req.schoolDb);
@@ -254,6 +256,50 @@ const deleteAllTimeTable = asyncHandler(async (req, res, next) => {
   await timeTableOperations.deleteAll(req, res, next);
 });
 
+const getTimeTableConflicts = asyncHandler(async (req, res) => {
+  const TimeTable = getTimeTableModel(req.schoolDb);
+  const { academicYear } = req.query;
+  const filter = {};
+  if (academicYear) filter.academicYear = academicYear;
+  const all = await TimeTable.find(filter).lean();
+  const conflicts = findTeacherSlotConflicts(all);
+  res.status(200).json({ success: true, count: conflicts.length, conflicts });
+});
+
+const autoGenerateTimeTable = asyncHandler(async (req, res, next) => {
+  const { classId, academicYear, templateTimeTableId, slotTemplate } = req.body;
+  if (!classId || !academicYear) {
+    return next(createError(400, "classId and academicYear are required"));
+  }
+
+  const TimeTable = getTimeTableModel(req.schoolDb);
+  const existing = await TimeTable.findOne({ class: classId, academicYear });
+  if (existing) {
+    return next(
+      createError(400, "Timetable already exists for this class and academic year"),
+    );
+  }
+
+  let week;
+  if (templateTimeTableId) {
+    const tpl = await TimeTable.findById(templateTimeTableId).lean();
+    if (!tpl || !tpl.week) {
+      return next(createError(404, "Template timetable not found"));
+    }
+    week = JSON.parse(JSON.stringify(tpl.week));
+  } else if (slotTemplate && typeof slotTemplate === "object") {
+    week = slotTemplate;
+  } else {
+    week = {};
+    DAYS.forEach((d) => {
+      week[d] = [];
+    });
+  }
+
+  const doc = await TimeTable.create({ class: classId, academicYear, week });
+  res.status(201).json(doc);
+});
+
 module.exports = {
   createTimeTable,
   getAllTimeTable,
@@ -263,4 +309,6 @@ module.exports = {
   deleteTimeTableById,
   deleteAllTimeTable,
   deleteLectureFromTimeTable,
+  getTimeTableConflicts,
+  autoGenerateTimeTable,
 };

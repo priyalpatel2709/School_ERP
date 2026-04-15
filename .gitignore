@@ -8,3 +8,4 @@ node_modules/
 /error.log
 
 logs
+/uploads

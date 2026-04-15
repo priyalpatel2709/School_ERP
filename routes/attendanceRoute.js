@@ -12,6 +12,7 @@ const {
     bulkMarkStudentAttendance,
     getMonthlyAttendanceReport,
     getClassAttendanceByDate,
+    getClassAttendanceReport,
     createStaffAttendance,
     getAllStaffAttendance,
     getStaffAttendanceById,
@@ -30,6 +31,7 @@ router.get("/student", identifyTenant, protect, authorize(permissions.ATTENDANCE
 router.get("/student/:id", identifyTenant, protect, authorize(permissions.ATTENDANCE_STUDENT_VIEW), getStudentAttendanceById);
 router.get("/student/:studentId/monthly", identifyTenant, protect, authorize(permissions.ATTENDANCE_STUDENT_VIEW), getMonthlyAttendanceReport);
 router.get("/student/class/:classId/date/:date", identifyTenant, protect, authorize(permissions.ATTENDANCE_STUDENT_VIEW), getClassAttendanceByDate);
+router.get("/student/class/:classId/report", identifyTenant, protect, authorize(permissions.ATTENDANCE_STUDENT_VIEW), getClassAttendanceReport);
 router.put("/student/:id", identifyTenant, protect, authorize(permissions.ATTENDANCE_STUDENT_MARK), updateStudentAttendance);
 router.delete("/student/:id", identifyTenant, protect, authorize(permissions.ATTENDANCE_STUDENT_MARK), deleteStudentAttendance);
 
