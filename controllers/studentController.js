@@ -11,6 +11,7 @@ const {
 } = require("../models");
 const crudOperations = require("../utils/crudOperations");
 const { timeTablePopulateModel } = require("../utils/miscellaneousFunctions");
+const { storedSchoolIdForActiveTenant } = require("../utils/schoolAccess");
 const mongoose = require("mongoose");
 
 //create new Student
@@ -129,10 +130,15 @@ const createStudentWithUser = asyncHandler(async (req, res, next) => {
       }
     }
 
+    const schoolIDForUser = storedSchoolIdForActiveTenant(req.user, req.tenantId);
+    if (!schoolIDForUser) {
+      return next(createError(400, "Could not resolve school ID for new user"));
+    }
+
     // 2. Create the new user with the student role
     const newUser = new User({
       ...user,
-      schoolID: req.user.schoolID,
+      schoolID: schoolIDForUser,
     });
     const savedUser = await newUser.save();
 
@@ -289,12 +295,17 @@ const createParentAccount = asyncHandler(async (req, res, next) => {
       return next(createError(400, "A user with this email already exists"));
     }
 
+    const schoolIDForUser = storedSchoolIdForActiveTenant(req.user, req.tenantId);
+    if (!schoolIDForUser) {
+      return next(createError(400, "Could not resolve school ID for new user"));
+    }
+
     // Create User with Parent role and schoolID
     const newUser = new User({
       ...userData,
       roleName: "Parent",
       loginID: userData.email,
-      schoolID: req.user.schoolID, // Assign the school ID from the authenticated user
+      schoolID: schoolIDForUser,
     });
     const savedUser = await newUser.save();
 

@@ -4,6 +4,19 @@ const crudOperations = require("../utils/crudOperations");
 const { getUserModel, getNotificationModel } = require("../models");
 const createError = require("http-errors");
 const { publicUrlFromDiskFilename } = require("../middleware/profileImageUpload");
+const {
+  listSchoolConnectionKeys,
+  tenantConnectionKey,
+  userHasSchoolAccess,
+  tenantStoredAliases,
+} = require("../utils/schoolAccess");
+
+const authCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict",
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+};
 
 // Authenticate user and generate token
 const authUser = asyncHandler(async (req, res) => {
@@ -18,44 +31,66 @@ const authUser = asyncHandler(async (req, res) => {
     throw createError(401, "Invalid email or password");
   }
 
+  // if (!password || !(await user.matchPassword(password))) {
+  //   throw createError(401, "Invalid email or password");
+  // }
+
   const token = generateToken(user._id);
 
-  // Set cookies for token and schoolID
-  const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-    sameSite: 'strict',
-    maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-  };
+  const schoolKeys = listSchoolConnectionKeys(user);
+  if (!schoolKeys.length) {
+    throw createError(400, "User has no school access configured");
+  }
 
-  // Strip 'school_' prefix from schoolID for cookie
-  const schoolIdForCookie = user.schoolID.startsWith('school_')
-    ? user.schoolID.substring(7) // Remove 'school_' (7 characters)
-    : user.schoolID;
+  const requiresSchoolSelection = schoolKeys.length > 1;
 
-  res.cookie('token', token, cookieOptions);
-  res.cookie('X-School-Id', schoolIdForCookie, cookieOptions);
+  res.cookie("token", token, authCookieOptions);
+  if (!requiresSchoolSelection) {
+    res.cookie("X-School-Id", schoolKeys[0], authCookieOptions);
+  } else {
+    res.clearCookie("X-School-Id");
+  }
 
   // Return user info and generated token
   res.json({
-    _id: user._id,
-    name: user.name,
-    email: user.email,
-    token: token,
-    schoolID: user.schoolID,
-    roleName: user.roleName,
+    success: true,
+    message: "Login successful",
+    data: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token,
+      schoolID: user.schoolID || schoolKeys[0],
+      schoolIDs: schoolKeys,
+      requiresSchoolSelection,
+      roleName: user.roleName,
+    },
   });
 });
 
 const registerUser = asyncHandler(async (req, res, next) => {
   try {
-    const { email, schoolID, ...user } = req.body;
+    const { email, schoolID, schoolIDs, ...user } = req.body;
     const User = getUserModel(req.usersDb);
 
-    // Check if schoolID is provided
-    if (!schoolID) {
-      throw createError(400, "School ID must be provided");
+    const rawSchoolList = [];
+    if (schoolID) rawSchoolList.push(schoolID);
+    if (Array.isArray(schoolIDs)) rawSchoolList.push(...schoolIDs);
+
+    const resolvedKeys = [
+      ...new Set(
+        rawSchoolList.map((id) => tenantConnectionKey(id)).filter(Boolean)
+      ),
+    ];
+
+    if (!resolvedKeys.length) {
+      throw createError(400, "schoolID or non-empty schoolIDs must be provided");
     }
+
+    const primarySchoolStored =
+      schoolID != null && String(schoolID).trim() !== ""
+        ? schoolID
+        : `school_${resolvedKeys[0]}`;
 
     // Check if user with the same email already exists
     const userExists = await User.findOne({ email });
@@ -66,36 +101,38 @@ const registerUser = asyncHandler(async (req, res, next) => {
     // Create new user
     const newUser = await User.create({
       email,
-      schoolID,
+      schoolID: primarySchoolStored,
+      schoolIDs:
+        resolvedKeys.length > 1
+          ? resolvedKeys.map((k) => `school_${k}`)
+          : undefined,
       ...user,
     });
 
     const token = generateToken(newUser._id);
 
-    // Set cookies for token and schoolID
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    };
+    const schoolKeys = listSchoolConnectionKeys(newUser);
+    const requiresSchoolSelection = schoolKeys.length > 1;
 
-    // Strip 'school_' prefix from schoolID for cookie
-    const schoolIdForCookie = schoolID.startsWith('school_')
-      ? schoolID.substring(7)
-      : schoolID;
-
-    res.cookie('token', token, cookieOptions);
-    res.cookie('X-School-Id', schoolIdForCookie, cookieOptions);
+    res.cookie("token", token, authCookieOptions);
+    if (!requiresSchoolSelection) {
+      res.cookie("X-School-Id", schoolKeys[0], authCookieOptions);
+    }
 
     // Return user info and generated token
     res.status(201).json({
-      _id: newUser._id,
-      name: newUser.name,
-      email: newUser.email,
-      token: token,
-      schoolID: schoolID,
-      roleName: newUser.roleName,
+      success: true,
+      message: "User registered",
+      data: {
+        _id: newUser._id,
+        name: newUser.name,
+        email: newUser.email,
+        token,
+        schoolID: newUser.schoolID,
+        schoolIDs: schoolKeys,
+        requiresSchoolSelection,
+        roleName: newUser.roleName,
+      },
     });
   } catch (error) {
     // Handle validation errors
@@ -188,21 +225,56 @@ const assignRoleToUser = asyncHandler(async (req, res) => {
 
 // Get users by school ID with role population
 const getUsersBySchoolID = asyncHandler(async (req, res) => {
-  const { schoolID } = req.user;
+  const tenant = req.tenantId;
+  if (!tenant || tenant === "Users") {
+    throw createError(400, "School context is required (X-School-Id header)");
+  }
+
+  const aliases = tenantStoredAliases(tenant);
   const User = getUserModel(req.usersDb);
 
-  // Find all users with the given schoolID
-  const users = await User.find({ schoolID }).lean();
+  const users = await User.find({
+    $or: [{ schoolID: { $in: aliases } }, { schoolIDs: { $in: aliases } }],
+  })
+    .select("-password")
+    .lean();
 
-  // Populate each user with their role from the Role database
-  const populatedUsers = await Promise.all(
-    users.map(async (user) => {
-      return { ...user };
-    })
-  );
+  res.status(200).json({
+    success: true,
+    message: "Users for school fetched",
+    data: users,
+    meta: { total: users.length },
+  });
+});
 
-  // Return populated users
-  res.status(200).json(populatedUsers);
+const getMySchools = asyncHandler(async (req, res) => {
+  const keys = listSchoolConnectionKeys(req.user);
+  res.json({
+    success: true,
+    message: "Assigned schools",
+    data: keys.map((schoolId) => ({ schoolId })),
+    meta: {
+      count: keys.length,
+      requiresSchoolSelection: keys.length > 1,
+    },
+  });
+});
+
+const switchActiveSchool = asyncHandler(async (req, res, next) => {
+  const { schoolId } = req.body;
+  if (!schoolId) {
+    return next(createError(400, "schoolId is required in body"));
+  }
+  if (!userHasSchoolAccess(req.user, schoolId)) {
+    return next(createError(403, "You do not have access to this school"));
+  }
+  const key = tenantConnectionKey(schoolId);
+  res.cookie("X-School-Id", key, authCookieOptions);
+  res.json({
+    success: true,
+    message: "Active school updated",
+    data: { activeSchoolId: key },
+  });
 });
 
 // Logout user and clear cookies
@@ -246,6 +318,8 @@ module.exports = {
   getAllUsers,
   assignRoleToUser,
   getUsersBySchoolID,
+  getMySchools,
+  switchActiveSchool,
   logoutUser,
   uploadProfileImage,
 };

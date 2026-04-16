@@ -19,6 +19,8 @@ const userModel = new mongoose.Schema(
     role: { type: mongoose.Schema.Types.ObjectId, ref: "Role" },
     deviceToken: { type: String, default: "" },
     schoolID: { type: String, required: false },
+    /** Additional schools for admins (primary / legacy field remains `schoolID`). */
+    schoolIDs: [{ type: String }],
     isActive: { type: Boolean, required: true, default: true },
     age: { type: Number },
     address: {

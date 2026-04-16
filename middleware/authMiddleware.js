@@ -1,6 +1,7 @@
 const jwt = require("jsonwebtoken");
 const getUserModel = require("../models/userModel");
 const asyncHandler = require("express-async-handler");
+const { userHasSchoolAccess } = require("../utils/schoolAccess");
 
 const protect = asyncHandler(async (req, res, next) => {
   // Check for token in Authorization header first, then in cookies
@@ -21,6 +22,16 @@ const protect = asyncHandler(async (req, res, next) => {
 
     if (!user) {
       return res.status(401).json({ error: "User not found" });
+    }
+
+    if (
+      req.tenantId &&
+      req.tenantId !== "Users" &&
+      !userHasSchoolAccess(user, req.tenantId)
+    ) {
+      return res
+        .status(403)
+        .json({ error: "Not authorized for this school tenant" });
     }
 
     req.user = user;

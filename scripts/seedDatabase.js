@@ -29,15 +29,17 @@ const getTransportVehicleModel = require("../models/transportVehicleModel");
 const getLibraryItemModel = require("../models/libraryItemModel");
 const getLibraryBorrowingModel = require("../models/libraryBorrowingModel");
 const getSubstitutionModel = require("../models/substitutionModel");
+const getFeeAuditLogModel = require("../models/feeAuditLogModel");
 
 const { connectToDatabase } = require("../config/db");
-let userDB, schoolDB;
+let userDB, schoolDB, schoolDBSecondary;
 
 const connectDB = async () => {
   try {
     userDB = await connectToDatabase("Users");
     schoolDB = await connectToDatabase("ABC");
-    console.log("Connected to databases successfully");
+    schoolDBSecondary = await connectToDatabase("XYZ");
+    console.log("Connected to databases successfully (Users, ABC, XYZ)");
   } catch (error) {
     console.error("Failed to connect to databases:", error);
     process.exit(1);
@@ -62,6 +64,7 @@ const seedDatabase = async () => {
     const FeeStructure = getFeeStructureModel(schoolDB);
     const FeeInvoice = getFeeInvoiceModel(schoolDB);
     const FeePayment = getFeePaymentModel(schoolDB);
+    const FeeAuditLog = getFeeAuditLogModel(schoolDB);
     const Examination = getExaminationModel(schoolDB);
     const ExamResult = getExamResultModel(schoolDB);
     const GradingSystem = getGradingSystemModel(schoolDB);
@@ -114,7 +117,7 @@ const seedDatabase = async () => {
         },
         roleName: "Teacher",
         medicalRecode: {
-          bloodGroup: "O+",
+          bloodGoop: "O+",
           height: 180,
           weight: 75,
         },
@@ -155,7 +158,7 @@ const seedDatabase = async () => {
           },
         },
         medicalRecode: {
-          bloodGroup: "A+",
+          bloodGoop: "A+",
           height: 165,
           weight: 60,
         },
@@ -198,7 +201,7 @@ const seedDatabase = async () => {
         },
         roleName: "Teacher",
         medicalRecode: {
-          bloodGroup: "B+",
+          bloodGoop: "B+",
           height: 170,
           weight: 65,
         },
@@ -240,7 +243,7 @@ const seedDatabase = async () => {
         },
         roleName: "Teacher",
         medicalRecode: {
-          bloodGroup: "AB+",
+          bloodGoop: "AB+",
           height: 175,
           weight: 70,
         },
@@ -282,7 +285,7 @@ const seedDatabase = async () => {
         },
         roleName: "Teacher",
         medicalRecode: {
-          bloodGroup: "O-",
+          bloodGoop: "O-",
           height: 185,
           weight: 80,
         },
@@ -324,7 +327,7 @@ const seedDatabase = async () => {
         },
         roleName: "Student",
         medicalRecode: {
-          bloodGroup: "A-",
+          bloodGoop: "A-",
           height: 160,
           weight: 55,
         },
@@ -365,7 +368,7 @@ const seedDatabase = async () => {
           },
         },
         medicalRecode: {
-          bloodGroup: "B-",
+          bloodGoop: "B-",
           height: 155,
           weight: 50,
         },
@@ -407,7 +410,7 @@ const seedDatabase = async () => {
           },
         },
         medicalRecode: {
-          bloodGroup: "O+",
+          bloodGoop: "O+",
           height: 178,
           weight: 72,
         },
@@ -449,7 +452,7 @@ const seedDatabase = async () => {
           },
         },
         medicalRecode: {
-          bloodGroup: "AB-",
+          bloodGoop: "AB-",
           height: 180,
           weight: 70,
         },
@@ -491,7 +494,7 @@ const seedDatabase = async () => {
           },
         },
         medicalRecode: {
-          bloodGroup: "B+",
+          bloodGoop: "B+",
           height: 158,
           weight: 52,
         },
@@ -1395,6 +1398,25 @@ const seedDatabase = async () => {
       metaData: [{ key: "motto", value: "Knowledge is Power" }],
     });
 
+    const SchoolDetailXYZ = getSchoolDetailModel(schoolDBSecondary);
+    await SchoolDetailXYZ.create({
+      name: "Westbrook Academy",
+      address: {
+        street: "500 West St",
+        city: "Rivertown",
+        state: "IL",
+        zip: "62702",
+        country: "USA",
+      },
+      phone: "555-0100",
+      email: "info@westbrook.edu",
+      established: new Date("2005-09-01"),
+      maxStudents: 500,
+      maxStaff: 50,
+      schoolImage: "westbrook_school_image_url",
+      metaData: [{ key: "motto", value: "Learning Together" }],
+    });
+
     console.log("✓ Phase 1 data seeded successfully");
     console.log("Starting Phase 2 data seeding...");
 
@@ -1481,6 +1503,46 @@ const seedDatabase = async () => {
     ]);
 
     console.log("✓ Roles created");
+
+    const adminRoleDoc = roles.find((r) => r.roleName === "Admin") || roles[0];
+    const adminUsers = await User.create([
+      {
+        name: {
+          firstName: "Alex",
+          middleName: "",
+          lastName: "Administrator",
+        },
+        gender: "male",
+        email: "admin@springfieldhigh.edu",
+        loginID: "admin_abc",
+        password: "123",
+        schoolID: "school_ABC",
+        isActive: true,
+        roleName: "Admin",
+        role: adminRoleDoc._id,
+        access: [...(adminRoleDoc.access || [])],
+        metaData: [{ key: "seed", value: "single-school-admin" }],
+      },
+      {
+        name: {
+          firstName: "Morgan",
+          middleName: "",
+          lastName: "DistrictAdmin",
+        },
+        gender: "female",
+        email: "multi.admin@demo.edu",
+        loginID: "admin_multi",
+        password: "123",
+        schoolID: "school_ABC",
+        schoolIDs: ["school_ABC", "school_XYZ"],
+        isActive: true,
+        roleName: "Admin",
+        role: adminRoleDoc._id,
+        access: [...(adminRoleDoc.access || [])],
+        metaData: [{ key: "seed", value: "multi-school-admin" }],
+      },
+    ]);
+    console.log("✓ Admin users created (single-school + multi-school)");
 
     // ========================================
     // PHASE 2: GRADING SYSTEM
@@ -1812,6 +1874,23 @@ const seedDatabase = async () => {
     ]);
 
     console.log("✓ Fee payments created");
+
+    const feeAuditLogs = await FeeAuditLog.create([
+      {
+        action: "INVOICE_REMINDER_SENT",
+        entityType: "FeeInvoice",
+        entityId: feeInvoices[0]._id,
+        actor: adminUsers[0]._id,
+        details: { channel: "email", seed: true },
+      },
+      {
+        action: "LATE_FEE_WAIVED",
+        entityType: "FeeInvoice",
+        entityId: feeInvoices[1]._id,
+        actor: adminUsers[0]._id,
+        details: { reason: "seed demo waiver", seed: true },
+      },
+    ]);
 
     // ========================================
     // PHASE 2: EXAMINATIONS
@@ -2523,18 +2602,21 @@ const seedDatabase = async () => {
     console.log("\n========================================");
     console.log("✓ Database seeded successfully!");
     console.log("========================================");
-    console.log(`✓ Users: ${users.length}`);
+    console.log(
+      `✓ Users: ${users.length} (teachers/students) + librarian + ${adminUsers.length} admins`,
+    );
     console.log(`✓ Teachers: ${teachers.length}`);
     console.log(`✓ Students: ${students.length}`);
     console.log(`✓ Classes: ${classes.length}`);
     console.log(`✓ Subjects: ${subjects.length}`);
     console.log(`✓ Timetables: 1`);
-    console.log(`✓ School Details: 1`);
+    console.log(`✓ School Details: 2 (ABC + XYZ tenant)`);
     console.log(`✓ Roles: ${roles.length}`);
     console.log(`✓ Grading Systems: 1`);
     console.log(`✓ Fee Structures: ${feeStructures.length}`);
     console.log(`✓ Fee Invoices: ${feeInvoices.length}`);
     console.log(`✓ Fee Payments: ${feePayments.length}`);
+    console.log(`✓ Fee audit logs: ${feeAuditLogs.length}`);
     console.log(`✓ Examinations: ${examinations.length}`);
     console.log(`✓ Exam Results: ${examResults.length}`);
     console.log(`✓ Homework: ${homework.length}`);
@@ -2547,14 +2629,28 @@ const seedDatabase = async () => {
     console.log(`✓ Substitutions: ${substitutionsSeed.length}`);
     console.log(`✓ Payroll drafts: 1 (${payrollDraftSeed.lines.length} lines)`);
     console.log(`✓ Librarian login: ${librarianUser.email} (${librarianUser.loginID})`);
+    console.log(
+      `✓ Admin (single school): ${adminUsers[0].email} / ${adminUsers[0].loginID} — password 123`,
+    );
+    console.log(
+      `✓ Admin (multi school ABC+XYZ): ${adminUsers[1].email} / ${adminUsers[1].loginID} — password 123`,
+    );
     console.log(`✓ Notifications: ${notifications.length}`);
     console.log("========================================\n");
   } catch (error) {
     console.error("Error seeding database:", error);
   } finally {
-    // Close database connections
-    if (userDB) await userDB.connection;
-    if (schoolDB) await schoolDB.connection;
+    const closeConn = async (conn, label) => {
+      if (!conn || typeof conn.close !== "function") return;
+      try {
+        await conn.close();
+      } catch (e) {
+        console.error(`Error closing ${label}:`, e.message);
+      }
+    };
+    await closeConn(userDB, "Users");
+    await closeConn(schoolDB, "ABC");
+    await closeConn(schoolDBSecondary, "XYZ");
     console.log("Database connections closed");
   }
 };
@@ -2587,9 +2683,11 @@ const drop = async () => {
     console.error("Error in drop function:", error);
     process.exit(1); // Exit process if there's an error in the drop function
   } finally {
-    // Close database connections after dropping
-    if (userDB) await userDB.connection.close();
-    if (schoolDB) await schoolDB.connection.close();
+    if (userDB && typeof userDB.close === "function") await userDB.close();
+    if (schoolDB && typeof schoolDB.close === "function") await schoolDB.close();
+    if (schoolDBSecondary && typeof schoolDBSecondary.close === "function") {
+      await schoolDBSecondary.close();
+    }
     console.log("Database connections closed");
   }
 };

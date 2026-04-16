@@ -21,6 +21,8 @@ const identifyTenant = async (req, res, next) => {
     return res.status(400).json({ message: "School ID is required" });
   }
 
+  req.tenantId = schoolId;
+
   try {
     // Connect to the "Users" database
     req.usersDb = await connectToDatabase("Users");

@@ -21,6 +21,7 @@ const payrollRoutes = require("./payrollRoute");
 const transportRoutes = require("./transportRoute");
 const communicationRoutes = require("./communicationRoute");
 const libraryRoutes = require("./library");
+const reportRoutes = require("./reportRoutes");
 
 module.exports = {
   userRouters,
@@ -45,4 +46,5 @@ module.exports = {
   transportRoutes,
   communicationRoutes,
   libraryRoutes,
+  reportRoutes,
 };

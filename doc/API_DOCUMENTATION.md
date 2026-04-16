@@ -11,13 +11,20 @@
 
 Most endpoints require:
 
-1. **Tenant identification** using one of:
+1. **Authentication cookie** (`token`) set after login.
+2. **Tenant identification** for school-scoped APIs using one of:
    - Header: `X-School-Id: <schoolId>`
    - Query: `?schoolId=<schoolId>`
    - Body field: `schoolId`
-2. **Authentication cookie** (`token`) set after login.
 
-> Note: current auth middleware checks cookie token (`req.cookies.token`) for protected routes.
+### Multi-school admin behavior
+
+- A user can now have:
+  - `schoolID` (primary/legacy school), and
+  - `schoolIDs` (additional schools)
+- For users with multiple schools, login returns `requiresSchoolSelection: true`.
+- In that case, call `POST /api/v1/user/users/me/active-school` before school-scoped APIs.
+- The API stores selected school in cookie `X-School-Id` (short tenant key like `ABC`).
 
 ## Quick Start Flow
 
@@ -29,9 +36,8 @@ Request:
 
 ```json
 {
-  "email": "admin@school.com",
-  "password": "your-password",
-  "schoolId": "school_abc"
+  "email": "multi.admin@demo.edu",
+  "password": "123"
 }
 ```
 
@@ -39,16 +45,55 @@ Response (example):
 
 ```json
 {
+  "success": true,
   "message": "Login successful",
-  "user": {
-    "_id": "..."
+  "data": {
+    "_id": "661f8b...",
+    "name": {
+      "firstName": "Morgan",
+      "lastName": "DistrictAdmin"
+    },
+    "email": "multi.admin@demo.edu",
+    "token": "<jwt>",
+    "schoolID": "school_ABC",
+    "schoolIDs": ["ABC", "XYZ"],
+    "requiresSchoolSelection": true,
+    "roleName": "Admin"
   }
 }
 ```
 
-### 2) Call protected endpoints
+### 2) If needed, set active school (multi-school users)
 
-Send `X-School-Id` and include the `token` cookie returned by login.
+`POST /api/v1/user/users/me/active-school`
+
+Headers:
+
+- `Cookie: token=<jwtToken>`
+
+Request:
+
+```json
+{
+  "schoolId": "ABC"
+}
+```
+
+Response:
+
+```json
+{
+  "success": true,
+  "message": "Active school updated",
+  "data": {
+    "activeSchoolId": "ABC"
+  }
+}
+```
+
+### 3) Call protected school endpoints
+
+Send `X-School-Id` (or rely on `X-School-Id` cookie) and include `token` cookie.
 
 ---
 
@@ -90,10 +135,12 @@ Each row contains: **Method | Endpoint | Use | Request | Response**
 
 ### User (`/api/v1/user`)
 
-- `POST | /login | Authenticate user | body: credentials + schoolId | auth result + cookie`
+- `POST | /login | Authenticate user | body: email + password | auth result + cookie`
 - `POST | /logout | Logout user | no body | logout confirmation`
-- `POST | / | Register user | body: user fields (+ optional schoolId) | created user`
+- `POST | / | Register user | body: user fields (+ schoolID and/or schoolIDs) | created user`
 - `GET | /users/school | List users by school | query/header schoolId | users[]`
+- `GET | /users/me/schools | List assigned schools for logged-in user | token cookie | school list + selection meta`
+- `POST | /users/me/active-school | Set active school for logged-in user | body: schoolId | active school confirmation`
 - `GET | /users | List users | query/header schoolId | users[]`
 - `POST | /users/profile-image | Upload own profile image | multipart: image | updated user/image info`
 - `POST | /users/:id/profile-image | Upload image for specific user (self/admin) | multipart: image | updated user/image info`
@@ -370,6 +417,12 @@ Each row contains: **Method | Endpoint | Use | Request | Response**
 - `GET | /borrowings/due-soon | Items due soon | query window optional | dueSoon[]`
 - `GET | /statistics/borrowings | Borrowing statistics | no body | statistics`
 
+### Reports (`/api/v1/reports`)
+
+- `GET | /fee/daily-collection | Admin all-school daily fee collection | query: date=YYYY-MM-DD + token cookie | grand total + per-school totals/details`
+
+> This route runs from Users DB context and aggregates across all schools assigned to the admin account.
+
 ---
 
 ## Request/Response Example for Protected API
@@ -500,3 +553,45 @@ Library module has special role guard:
 - Permission checks (`authorize(...)`) are present on many modules (attendance, fee, exam, leave, grading).
 - Keep request body fields aligned with controller/model validation for each endpoint.
 - For exact live schema examples, cross-check the Swagger page at `/api-docs`.
+
+---
+
+## New Multi-school API Usage Guide
+
+### Scenario A: Single-school admin
+
+1. Login via `POST /api/v1/user/login`
+2. If `requiresSchoolSelection` is `false`, call APIs directly.
+3. Send `X-School-Id` (or rely on cookie) for school-scoped endpoints.
+
+### Scenario B: Multi-school admin
+
+1. Login via `POST /api/v1/user/login`
+2. Call `GET /api/v1/user/users/me/schools`
+3. Let admin choose a school in UI
+4. Call `POST /api/v1/user/users/me/active-school` with selected `schoolId`
+5. Call school-scoped APIs (students, teachers, fees, etc.)
+
+### Scenario C: All-school fee report (single dashboard command)
+
+Use:
+
+`GET /api/v1/reports/fee/daily-collection?date=2026-04-16`
+
+Example response:
+
+```json
+{
+  "success": true,
+  "message": "Daily fee collection aggregated for all assigned schools",
+  "data": {
+    "date": "2026-04-16",
+    "grandTotal": 9000,
+    "totalPayments": 5,
+    "bySchool": [
+      { "schoolId": "ABC", "success": true, "totalCollection": 7000, "count": 3, "data": [] },
+      { "schoolId": "XYZ", "success": true, "totalCollection": 2000, "count": 2, "data": [] }
+    ]
+  }
+}
+```

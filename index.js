@@ -39,6 +39,7 @@ const {
   transportRoutes,
   communicationRoutes,
   libraryRoutes,
+  reportRoutes,
 } = require("./routes");
 
 // Import error handlers
@@ -106,6 +107,7 @@ app.use("/api/v1/payroll", payrollRoutes);
 app.use("/api/v1/transport", transportRoutes);
 app.use("/api/v1/communication", communicationRoutes);
 app.use("/api/v1/library", libraryRoutes);
+app.use("/api/v1/reports", reportRoutes);
 
 // Error handling
 app.use(notFound);
