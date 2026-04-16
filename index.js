@@ -39,6 +39,7 @@ const {
   transportRoutes,
   communicationRoutes,
   libraryRoutes,
+  reportRoutes,
 } = require("./routes");
 
 // Import error handlers
@@ -47,8 +48,8 @@ const { notFound, errorHandler } = require("./middleware/errorMiddleware");
 // Load environment variables
 dotenv.config();
 
-const swaggerUi = require('swagger-ui-express');
-const swaggerSpecs = require('./config/swagger');
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpecs = require("./config/swagger");
 
 const app = express();
 
@@ -61,9 +62,9 @@ app.use(cors());
 app.use(compression()); // Compress all responses
 
 // Body parsing
-app.use(express.json({ limit: '10kb' })); // Limit body size
+app.use(express.json({ limit: "10kb" })); // Limit body size
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true, limit: '10kb' }));
+app.use(bodyParser.urlencoded({ extended: true, limit: "10kb" }));
 app.use(cookieParser()); // Parse cookies
 
 // Advanced Security
@@ -72,7 +73,7 @@ app.use(securityHeaders);
 app.use(limiter);
 
 // Logging middleware
-app.use(morgan('combined', { stream: require('./helper/logger').stream }));
+app.use(morgan("combined", { stream: require("./helper/logger").stream }));
 app.use(requestLogger);
 
 // Request processing middleware
@@ -82,9 +83,10 @@ app.use(sanitizeRequest);
 app.get("/", healthCheck);
 
 // API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // API routes
+app.use("/api/v1/admissions", admissionRoutes);
 app.use("/api/v1/user", userRouters);
 app.use("/api/v1/role", roleRoutes);
 app.use("/api/v1/schoolInfo", schoolDetailRoutes);
@@ -101,11 +103,11 @@ app.use("/api/v1/leave", leaveRoutes);
 app.use("/api/v1/examination", examinationRoutes);
 app.use("/api/v1/grading", gradingRoutes);
 app.use("/api/v1/substitution", substitutionRoutes);
-app.use("/api/v1/admissions", admissionRoutes);
 app.use("/api/v1/payroll", payrollRoutes);
 app.use("/api/v1/transport", transportRoutes);
 app.use("/api/v1/communication", communicationRoutes);
 app.use("/api/v1/library", libraryRoutes);
+app.use("/api/v1/reports", reportRoutes);
 
 // Error handling
 app.use(notFound);
@@ -119,10 +121,10 @@ const server = app.listen(PORT, () => {
 });
 
 // Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM received. Closing HTTP server...');
+process.on("SIGTERM", () => {
+  console.log("SIGTERM received. Closing HTTP server...");
   server.close(() => {
-    console.log('HTTP server closed');
+    console.log("HTTP server closed");
     process.exit(0);
   });
 });

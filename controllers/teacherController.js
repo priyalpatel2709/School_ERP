@@ -1,4 +1,5 @@
 const asyncHandler = require("express-async-handler");
+const { storedSchoolIdForActiveTenant } = require("../utils/schoolAccess");
 const createError = require("http-errors");
 const {
   getTeacherModel,
@@ -161,11 +162,16 @@ const createTeacherWithUser = asyncHandler(async (req, res, next) => {
     // Extract user data and other teacher-related data from the request body
     const { user, ...teacherData } = req.body;
 
+    const schoolIDForUser = storedSchoolIdForActiveTenant(req.user, req.tenantId);
+    if (!schoolIDForUser) {
+      return next(createError(400, "Could not resolve school ID for new user"));
+    }
+
     // Create the new user with the teacher role
     const newUser = new User({
       ...user,
       roleName: "Teacher",
-      schoolID: req.user.schoolID,
+      schoolID: schoolIDForUser,
     });
     const savedUser = await newUser.save();
 

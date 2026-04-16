@@ -10,10 +10,13 @@ const {
   updateById,
   assignRoleToUser,
   getUsersBySchoolID,
+  getMySchools,
+  switchActiveSchool,
   logoutUser,
   uploadProfileImage,
 } = require("../controllers/userController");
 const identifyTenant = require("../middleware/IdentificationMiddleware");
+const usersDbOnly = require("../middleware/usersDbOnly");
 const { protect } = require("../middleware/authMiddleware");
 const {
   uploadProfileImageMiddleware,
@@ -56,6 +59,12 @@ router.post("/", identifyTenant, registerUser);
 // Route: GET /api/users/users/school
 // Description: Get all users by school ID
 router.get("/users/school", identifyTenant, protect, getUsersBySchoolID);
+
+// Assigned schools (multi-tenant admin picker)
+router.get("/users/me/schools", usersDbOnly, protect, getMySchools);
+
+// Set active school cookie + header context for subsequent requests
+router.post("/users/me/active-school", usersDbOnly, protect, switchActiveSchool);
 
 // Route: GET /api/users/users
 // Description: Get all users
